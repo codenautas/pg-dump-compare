@@ -5,7 +5,10 @@
       "Bash(npm run:*)",
       "Bash(node dist\\\\cli.js tests\\\\fixtures\\\\dump1.sql tests\\\\fixtures\\\\dump1.sql)",
       "Bash(node dist/cli.js tests/fixtures/dump1.sql tests/fixtures/dump1.sql)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }
