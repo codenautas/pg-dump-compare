@@ -170,6 +170,29 @@ describe('canonicalize — owner options', () => {
     assert.ok(result.includes('OWNER TO owner'), 'expected simplified "owner" suffix');
     assert.ok(!result.includes('OWNER TO ejemplo_muleto_owner'), 'full owner name still present');
   });
+
+  it('removes GRANT lines with -no-owner', () => {
+    const result = canonicalize(parseDump(raw), { noOwner: true });
+    assert.ok(!/^GRANT\b/m.test(result), 'GRANT lines still present with -no-owner');
+  });
+
+  it('simplifies role in GRANT with -can-owner', () => {
+    const result = canonicalize(parseDump(raw), { canOwner: true });
+    assert.ok(!result.includes('TO ejemplo_muleto_admin'), 'full role name in GRANT still present');
+    assert.ok(result.includes('TO admin;'), 'expected simplified role in GRANT');
+  });
+
+  it('simplifies role in CREATE POLICY with -can-owner', () => {
+    const result = canonicalize(parseDump(raw), { canOwner: true });
+    assert.ok(!result.includes('TO ejemplo_muleto_admin USING'), 'full role name in POLICY still present');
+  });
+
+  it('removes TO clause from CREATE POLICY with -no-owner', () => {
+    const result = canonicalize(parseDump(raw), { noOwner: true });
+    // Policy should still exist but without TO role_name
+    assert.ok(result.search(/^CREATE POLICY\b/m) !== -1, 'CREATE POLICY missing entirely');
+    assert.ok(!result.includes('TO ejemplo_muleto_admin'), 'role name still in POLICY with -no-owner');
+  });
 });
 
 // ─── canonicalize — alphabetical order within category ───────────────────────

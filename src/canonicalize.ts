@@ -10,6 +10,8 @@ import {
 // Lines to move to initial settings section when found mid-dump
 const EXTRA_SETTING_RE = /^SET\s+default_(?:tablespace|table_access_method)\s*=/i;
 const OWNER_LINE_RE    = /^\s*ALTER\s+\S.*\bOWNER\s+TO\b/i;
+const GRANT_LINE_RE    = /^\s*GRANT\b/i;
+const POLICY_LINE_RE   = /^\s*CREATE\s+POLICY\b/i;
 
 // ─── category mapping ───────────────────────────────────────────────────────
 
@@ -126,20 +128,41 @@ function getConstraintSubtype(sqlLines: string[]): string {
 
 // ─── owner handling ──────────────────────────────────────────────────────────
 
+function shortenRole(role: string): string {
+  return role.replace(/^.*_/, '');
+}
+
 function applyOwner(lines: string[], opts: CanonicalOptions): string[] {
   if (!opts.noOwner && !opts.canOwner) return lines;
 
   const result: string[] = [];
   for (const line of lines) {
-    if (opts.noOwner && OWNER_LINE_RE.test(line)) continue;
-    if (opts.canOwner) {
-      result.push(line.replace(/\bOWNER\s+TO\s+([\w$]+)/i, (_, owner: string) => {
-        const short = owner.replace(/^.*_/, '');
-        return `OWNER TO ${short}`;
-      }));
-    } else {
-      result.push(line);
+    // ALTER ... OWNER TO role
+    if (OWNER_LINE_RE.test(line)) {
+      if (opts.noOwner) continue;
+      result.push(line.replace(/\bOWNER\s+TO\s+([\w$]+)/i, (_, r: string) => `OWNER TO ${shortenRole(r)}`));
+      continue;
     }
+
+    // GRANT ... TO role
+    if (GRANT_LINE_RE.test(line)) {
+      if (opts.noOwner) continue;
+      result.push(line.replace(/\bTO\s+([\w$]+)\s*;/i, (_, r: string) => `TO ${shortenRole(r)};`));
+      continue;
+    }
+
+    // CREATE POLICY ... TO role  (TO clause is on the same line in pg_dump output)
+    if (POLICY_LINE_RE.test(line)) {
+      if (opts.noOwner) {
+        // Remove the TO role clause; keep the rest of the policy definition
+        result.push(line.replace(/\s+TO\s+[\w$]+\b/i, ''));
+      } else {
+        result.push(line.replace(/\bTO\s+([\w$]+)\b/i, (_, r: string) => `TO ${shortenRole(r)}`));
+      }
+      continue;
+    }
+
+    result.push(line);
   }
   return result;
 }
