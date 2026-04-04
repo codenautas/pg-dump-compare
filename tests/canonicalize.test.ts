@@ -167,7 +167,7 @@ describe('canonicalize — owner options', () => {
 
   it('simplifies owner name with -can-owner', () => {
     const result = canonicalize(parseDump(raw), { canOwner: true });
-    assert.ok(result.includes('OWNER TO owner'), 'expected simplified "owner" suffix');
+    assert.ok(result.includes('OWNER TO _owner'), 'expected simplified "owner" suffix');
     assert.ok(!result.includes('OWNER TO ejemplo_muleto_owner'), 'full owner name still present');
   });
 
@@ -179,7 +179,7 @@ describe('canonicalize — owner options', () => {
   it('simplifies role in GRANT with -can-owner', () => {
     const result = canonicalize(parseDump(raw), { canOwner: true });
     assert.ok(!result.includes('TO ejemplo_muleto_admin'), 'full role name in GRANT still present');
-    assert.ok(result.includes('TO admin;'), 'expected simplified role in GRANT');
+    assert.ok(result.includes('TO _admin;'), 'expected simplified role in GRANT');
   });
 
   it('simplifies role in CREATE POLICY with -can-owner', () => {

@@ -129,7 +129,8 @@ function getConstraintSubtype(sqlLines: string[]): string {
 // ─── owner handling ──────────────────────────────────────────────────────────
 
 function shortenRole(role: string): string {
-  return role.replace(/^.*_/, '');
+  const idx = role.lastIndexOf('_');
+  return idx >= 0 ? role.slice(idx) : role;
 }
 
 function applyOwner(lines: string[], opts: CanonicalOptions): string[] {
