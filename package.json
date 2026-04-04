@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "mocha",
+    "test": "npm run build && mocha",
     "prepublish": "npm run build"
   },
   "devDependencies": {
