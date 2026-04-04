@@ -57,15 +57,16 @@ function main(): void {
   }
 
   // ── compare mode ───────────────────────────────────────────────────────────
-  const positional = args.filter(a => !a.startsWith('-') && a !== args[args.indexOf('-o') + 1]);
+  const cmpOIdx    = args.indexOf('-o');
+  const oValue     = cmpOIdx >= 0 ? args[cmpOIdx + 1] : null;
+  const positional = args.filter(a => !a.startsWith('-') && a !== oValue);
   if (positional.length < 2) {
     console.error('Error: SOURCE and TARGET are required');
     process.exit(1);
   }
 
   const [source, target] = positional;
-  const oIdx             = args.indexOf('-o');
-  const outputPath       = oIdx >= 0 ? args[oIdx + 1] : 'pg-dump-compare-results';
+  const outputPath       = cmpOIdx >= 0 ? args[cmpOIdx + 1] : 'pg-dump-compare-results';
 
   fs.mkdirSync(outputPath, { recursive: true });
 

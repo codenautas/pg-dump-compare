@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(npm run:*)",
+      "Bash(node dist\\\\cli.js tests\\\\fixtures\\\\dump1.sql tests\\\\fixtures\\\\dump1.sql)",
+      "Bash(node dist/cli.js tests/fixtures/dump1.sql tests/fixtures/dump1.sql)",
+      "Bash(npm install:*)"
     ]
   }
 }
