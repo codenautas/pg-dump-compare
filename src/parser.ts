@@ -19,81 +19,81 @@ function parseTocNameLine(line: string): Partial<TocInfo> {
   };
 }
 
+function findFooterStart(lines: string[], n: number): number {
+  for (let k = n - 1; k >= 0; k--) {
+    if (/^-- Completed on /.test(lines[k])) {
+      let s = k;
+      while (s > 0 && lines[s - 1].trim() === '') s--;
+      return s;
+    }
+    if (lines[k] === '--' && k + 1 < n && /PostgreSQL database dump complete/.test(lines[k + 1])) {
+      let s = k;
+      while (s > 0 && lines[s - 1].trim() === '') s--;
+      if (s > 0 && /^-- Completed on /i.test(lines[s - 1])) {
+        s--;
+        while (s > 0 && lines[s - 1].trim() === '') s--;
+      }
+      return s;
+    }
+  }
+  return n;
+}
+
 export function parseDump(content: string): ParsedDump {
-  const lines = content.split('\n');
+  // Normalize line endings (CRLF → LF) so all comparisons work regardless of OS
+  const lines = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
   const n = lines.length;
 
-  // Find all "-- TOC entry N" line indices
-  const tocIdxs: number[] = [];
+  // Find all metadata lines: lines starting with '--' and containing '; Type:'
+  // Works for both formats:
+  //   with TOC:    "-- Name: foo; Type: BAR; ..."  (after a "-- TOC entry N" line)
+  //   without TOC: "-- Name: foo; Type: BAR; ..."  (directly after the opening '--')
+  //   data blocks: "-- Data for Name: foo; Type: TABLE DATA; ..."
+  const metaIdxs: number[] = [];
   for (let i = 0; i < n; i++) {
-    if (/^-- TOC entry \d+/.test(lines[i])) tocIdxs.push(i);
+    if (lines[i].startsWith('--') && lines[i].includes('; Type:')) {
+      metaIdxs.push(i);
+    }
   }
 
-  if (tocIdxs.length === 0) {
+  if (metaIdxs.length === 0) {
     return { preamble: lines, blocks: [], footer: [] };
   }
 
-  // For each TOC entry, find the closing '--' of its header comment
-  const headerEnds: number[] = tocIdxs.map(tocIdx => {
-    let j = tocIdx + 1;
-    while (j < n && lines[j] !== '--') j++;
-    return j;
+  // For each metadata line find:
+  //   openIdx  — the first '--' in the run of '--'-prefixed lines ending at metaIdx
+  //   closeIdx — the first bare '--' line after metaIdx (closes the comment block)
+  interface Header { openIdx: number; closeIdx: number; metaLine: string; }
+
+  const headers: Header[] = metaIdxs.map(metaIdx => {
+    let openIdx = metaIdx;
+    while (openIdx > 0 && lines[openIdx - 1].startsWith('--')) openIdx--;
+
+    let closeIdx = metaIdx + 1;
+    while (closeIdx < n && lines[closeIdx] !== '--') closeIdx++;
+
+    return { openIdx, closeIdx, metaLine: lines[metaIdx] };
   });
 
-  // Opening '--' separator before each TOC entry
-  const headerStarts: number[] = tocIdxs.map(idx => idx - 1);
+  const preamble    = trimTrailingBlanks(lines.slice(0, headers[0].openIdx));
+  const footerStart = findFooterStart(lines, n);
 
-  // Preamble: everything before the first block's opening '--'
-  const preamble = trimTrailingBlanks(lines.slice(0, headerStarts[0]));
-
-  // Footer: search backwards for "Completed on" or "dump complete" marker
-  let footerStart = n;
-  for (let k = n - 1; k >= 0; k--) {
-    if (/^-- Completed on /.test(lines[k])) {
-      footerStart = k;
-      while (footerStart > 0 && lines[footerStart - 1].trim() === '') footerStart--;
-      break;
-    }
-    if (lines[k] === '--' && k + 1 < n && /PostgreSQL database dump complete/.test(lines[k + 1])) {
-      footerStart = k;
-      // Back up through blank lines, then through optional "Completed on" line, then blanks again
-      while (footerStart > 0 && lines[footerStart - 1].trim() === '') footerStart--;
-      if (footerStart > 0 && /^-- Completed on /i.test(lines[footerStart - 1])) {
-        footerStart--;
-        while (footerStart > 0 && lines[footerStart - 1].trim() === '') footerStart--;
-      }
-      break;
-    }
-  }
-
-  // Build blocks
   const blocks: Block[] = [];
-  for (let bi = 0; bi < tocIdxs.length; bi++) {
-    const tocIdx    = tocIdxs[bi];
-    const headerEnd = headerEnds[bi];
-
-    // Find the metadata line inside the header comment.
-    // Normal blocks:  "-- Name: foo; Type: BAR; ..."
-    // Data blocks:    "-- Data for Name: foo; Type: TABLE DATA; ..."
-    let nameLine = '';
-    for (let j = tocIdx + 1; j < headerEnd; j++) {
-      if (lines[j].includes('; Type:')) { nameLine = lines[j]; break; }
-    }
+  for (let bi = 0; bi < headers.length; bi++) {
+    const { closeIdx, metaLine } = headers[bi];
 
     const toc: TocInfo = {
       name: '', type: '', schema: '-', owner: '',
-      ...parseTocNameLine(nameLine),
+      ...parseTocNameLine(metaLine),
     };
 
-    // SQL range: from after header closing '--' to the next block's opening '--' (or footer)
-    const sqlStart = headerEnd + 1;
-    const sqlEnd   = bi + 1 < tocIdxs.length ? headerStarts[bi + 1] : footerStart;
+    const sqlStart = closeIdx + 1;
+    const sqlEnd   = bi + 1 < headers.length ? headers[bi + 1].openIdx : footerStart;
 
     const sqlLines = trimTrailingBlanks(lines.slice(sqlStart, sqlEnd));
     blocks.push({ toc, sqlLines });
   }
 
   const footer = footerStart < n ? lines.slice(footerStart) : [];
-
   return { preamble, blocks, footer };
 }

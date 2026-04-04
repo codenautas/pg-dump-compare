@@ -210,14 +210,34 @@ function collectExtraSettings(blocks: Block[]): string[] {
 // ─── footer processing ───────────────────────────────────────────────────────
 
 function processFooter(footer: string[]): string[] {
-  return footer.filter(line => !/^-- Completed on /i.test(line));
+  const filtered = footer.filter(line => !/^-- Completed on /i.test(line));
+  return trimTrailingBlanks(filtered);
 }
 
 // ─── block rendering ─────────────────────────────────────────────────────────
 
+// Remove inline COPY blocks that appear without their own TABLE DATA header
+// (some pg_dump variants omit the header comment for data sections)
+function removeCopyBlocks(lines: string[]): string[] {
+  const result: string[] = [];
+  let inCopy = false;
+  for (const line of lines) {
+    if (!inCopy && /^COPY\s+\S+.*\bFROM\s+stdin\b/i.test(line)) {
+      inCopy = true;
+      continue;
+    }
+    if (inCopy) {
+      if (line === '\\.') inCopy = false;
+      continue;
+    }
+    result.push(line);
+  }
+  return result;
+}
+
 function renderBlock(block: Block, opts: CanonicalOptions): string[] {
-  // Strip extra settings that belong in the initial section
-  let lines = block.sqlLines.filter(l => !EXTRA_SETTING_RE.test(l));
+  let lines = removeCopyBlocks(block.sqlLines);
+  lines = lines.filter(l => !EXTRA_SETTING_RE.test(l));
   lines = applyOwner(lines, opts);
   return trimTrailingBlanks(lines);
 }
@@ -272,12 +292,12 @@ export function canonicalize(dump: ParsedDump, opts: CanonicalOptions = {}): str
   // Emit output
   const out: string[] = [];
 
-  out.push(...header);
+  for (const l of header) out.push(l);
 
   if (settings.length > 0 || extraSettings.length > 0) {
     if (out.length > 0 && out[out.length - 1] !== '') out.push('');
-    out.push(...settings);
-    if (extraSettings.length > 0) out.push(...extraSettings);
+    for (const l of settings) out.push(l);
+    if (extraSettings.length > 0) for (const l of extraSettings) out.push(l);
   }
 
   // Categories in canonical order, then any unknown ones alphabetically
@@ -295,14 +315,14 @@ export function canonicalize(dump: ParsedDump, opts: CanonicalOptions = {}): str
       const blockLines = renderBlock(block, opts);
       if (blockLines.length > 0) {
         out.push('');
-        out.push(...blockLines);
+        for (const l of blockLines) out.push(l);
       }
     }
   }
 
   if (footer.length > 0) {
     out.push('');
-    out.push(...footer);
+    for (const l of footer) out.push(l);
   }
 
   return out.join('\n') + '\n';

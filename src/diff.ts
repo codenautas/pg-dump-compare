@@ -1,21 +1,20 @@
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 
 export function generateDiff(sourceFile: string, targetFile: string, outFile: string): void {
-  let patch: string;
+  const out = fs.openSync(outFile, 'w');
   try {
-    patch = execSync(
-      `git diff --no-index --ignore-blank-lines -w -- "${sourceFile}" "${targetFile}"`,
-      { encoding: 'utf-8' }
+    const result = spawnSync(
+      'git',
+      ['diff', '--no-index', '--ignore-blank-lines', '-w', '--', sourceFile, targetFile],
+      { stdio: ['ignore', out, 'pipe'] }
     );
-  } catch (err: unknown) {
-    const e = err as { status?: number; stdout?: string };
-    // git diff exits with code 1 when files differ — not an error
-    if (e.status === 1 && e.stdout !== undefined) {
-      patch = e.stdout;
-    } else {
-      throw err;
+    // git diff exits with 0 (identical) or 1 (differ) — both are success
+    if (result.status !== 0 && result.status !== 1) {
+      const msg = result.stderr ? result.stderr.toString() : `git exited with code ${result.status}`;
+      throw new Error(msg);
     }
+  } finally {
+    fs.closeSync(out);
   }
-  fs.writeFileSync(outFile, patch);
 }

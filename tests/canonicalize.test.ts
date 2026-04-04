@@ -211,6 +211,64 @@ describe('canonicalize — alphabetical ordering', () => {
   });
 });
 
+// ─── dump3: no-TOC format ────────────────────────────────────────────────────
+
+describe('dump3 — pg_dump without TOC entries', () => {
+  const DUMP3  = path.join(__dirname, 'fixtures', 'dump3.sql');
+  const raw3   = fs.readFileSync(DUMP3, 'utf-8');
+
+  it('parses blocks even without TOC entry lines', () => {
+    const { blocks } = parseDump(raw3);
+    assert.ok(blocks.length > 0, 'no blocks parsed from dump3');
+  });
+
+  it('finds expected object types', () => {
+    const { blocks } = parseDump(raw3);
+    const types = new Set(blocks.map(b => b.toc.type.toUpperCase()));
+    assert.ok(types.has('SCHEMA'),   'missing SCHEMA');
+    assert.ok(types.has('TABLE'),    'missing TABLE');
+    assert.ok(types.has('FUNCTION'), 'missing FUNCTION');
+  });
+
+  it('removes TOC-style block header comments', () => {
+    const result = canonicalize(parseDump(raw3));
+    assert.ok(!result.includes('; Type:'), 'block header comment still present');
+  });
+
+  it('removes COPY data (with header comment)', () => {
+    const result = canonicalize(parseDump(raw3));
+    assert.ok(!result.includes('FROM stdin'), 'COPY data still present');
+  });
+
+  it('removes inline COPY data (without header comment)', () => {
+    // dump3 line 221: COPY siper.tipos_domicilio … appears without its own header
+    const result = canonicalize(parseDump(raw3));
+    assert.ok(!result.includes('tipos_domicilio') || !result.includes('FROM stdin'),
+      'bare COPY block not removed');
+  });
+
+  it('removes setval calls', () => {
+    const result = canonicalize(parseDump(raw3));
+    assert.ok(!result.includes('setval'), 'setval still present');
+  });
+
+  it('orders objects correctly', () => {
+    const result = canonicalize(parseDump(raw3));
+    const typeIdx = result.indexOf('CREATE TYPE');
+    const funcIdx = result.search(/^CREATE\s+(OR\s+REPLACE\s+)?FUNCTION\b/m);
+    const tblIdx  = result.indexOf('CREATE TABLE');
+    assert.ok(typeIdx !== -1 && funcIdx !== -1 && tblIdx !== -1, 'missing object types');
+    assert.ok(typeIdx < funcIdx, 'TYPE should precede FUNCTION');
+    assert.ok(funcIdx < tblIdx,  'FUNCTION should precede TABLE');
+  });
+
+  it('is idempotent', () => {
+    const first  = canonicalize(parseDump(raw3));
+    const second = canonicalize(parseDump(first));
+    assert.strictEqual(first, second, 'not idempotent on dump3');
+  });
+});
+
 // ─── canonicalize — idempotency ───────────────────────────────────────────────
 
 describe('canonicalize — idempotency', () => {
