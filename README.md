@@ -23,7 +23,7 @@ npx pg-dump-compare source.sql target.sql
 ### Compare two dumps
 
 ```bash
-pg-dump-compare SOURCE TARGET [-o OUTPUT_PATH] [-no-roles] [-can-roles] [-rep-roles SOURCE/TARGET] [-oti]
+pg-dump-compare SOURCE TARGET [-o OUTPUT_PATH] [-no-roles] [-can-roles] [-in-roles SOURCE/TARGET] [-oti]
 ```
 
 Generates canonical versions of both dumps and a unified diff in `OUTPUT_PATH`.
@@ -33,7 +33,7 @@ Generates canonical versions of both dumps and a unified diff in `OUTPUT_PATH`.
 | `-o OUTPUT_PATH` | `pg-dump-compare-results` |
 | `-no-roles` | — |
 | `-can-roles` | — |
-| `-rep-roles SOURCE/TARGET` | — |
+| `-in-roles SOURCE/TARGET` | — |
 | `-oti` | — |
 
 **Output files:**
@@ -47,7 +47,7 @@ Generates canonical versions of both dumps and a unified diff in `OUTPUT_PATH`.
 ### Canonicalize a single dump
 
 ```bash
-pg-dump-compare --canonical DUMP_FILE [-o CANONICAL_FILE] [-no-roles] [-can-roles] [-rep-roles SOURCE/TARGET] [-oti]
+pg-dump-compare --canonical DUMP_FILE [-o CANONICAL_FILE] [-no-roles] [-can-roles] [-in-roles SOURCE/TARGET] [-oti]
 ```
 
 | Option | Default |
@@ -65,9 +65,9 @@ All three options apply to `ALTER … OWNER TO`, `GRANT … TO`, and the `TO rol
 | *(none)* | Role names are kept as-is |
 | `-no-roles` | Removes all `ALTER … OWNER TO` statements, all `GRANT` statements, and the `TO role` clause from `CREATE POLICY` |
 | `-can-roles` | Shortens every role name to the suffix after the last `_` — including the underscore (`ejemplo_muleto_owner` → `_owner`, `ejemplo_muleto_admin` → `_admin`) |
-| `-rep-roles SOURCE/TARGET` | Replaces the internal part of each role name |
+| `-in-roles SOURCE/TARGET` | Replaces the internal part of each role name |
 
-#### `-rep-roles SOURCE/TARGET` in detail
+#### `-in-roles SOURCE/TARGET` in detail
 
 Role names typically follow the pattern `prefix_middle_suffix` (or `prefix_suffix` with no middle). SOURCE and TARGET represent the internal segment to replace, including its surrounding underscores:
 
@@ -80,12 +80,12 @@ The replacement only happens when SOURCE appears **exactly once** in the role na
 
 | Command | Role before | Role after |
 |---|---|---|
-| `-rep-roles _muleto_/_in_` | `app_muleto_owner` | `app_in_owner` |
-| `-rep-roles _muleto_/_` | `app_muleto_owner` | `app_owner` |
-| `-rep-roles _/_staging_` | `app_owner` | `app_staging_owner` |
-| `-rep-roles _x_/_y_` | `ab_x_x_cd` (ambiguous) | `ab_x_x_cd` (unchanged) |
+| `-in-roles _muleto_/_in_` | `app_muleto_owner` | `app_in_owner` |
+| `-in-roles _muleto_/_` | `app_muleto_owner` | `app_owner` |
+| `-in-roles _/_staging_` | `app_owner` | `app_staging_owner` |
+| `-in-roles _x_/_y_` | `ab_x_x_cd` (ambiguous) | `ab_x_x_cd` (unchanged) |
 
-`-rep-roles` is useful when comparing dumps from environments whose role names share a schema-specific prefix and suffix but differ in the middle segment (e.g. `myapp_prod_admin` vs `myapp_staging_admin`).
+`-in-roles` is useful when comparing dumps from environments whose role names share a schema-specific prefix and suffix but differ in the middle segment (e.g. `myapp_prod_admin` vs `myapp_staging_admin`).
 
 ### `-oti` — Order Table Internally
 
@@ -103,7 +103,7 @@ The canonical version of a dump applies the following transformations:
 
 1. **Removes noise** — TOC entry comments, OIDs, and `Started on` / `Completed on` timestamps are stripped. Works with dumps that include a TOC and with those that do not (e.g. dumps generated without `--no-comments`).
 2. **Normalizes line endings** — CRLF is converted to LF.
-3. **Role normalization** — controlled by `-no-roles` / `-can-roles` / `-rep-roles` (see above). Applies to `ALTER … OWNER TO`, `GRANT … TO`, and `CREATE POLICY … TO`.
+3. **Role normalization** — controlled by `-no-roles` / `-can-roles` / `-in-roles` (see above). Applies to `ALTER … OWNER TO`, `GRANT … TO`, and `CREATE POLICY … TO`.
 4. **Preserves order-sensitive sections** in their original order:
    - Initial `SET` statements (connection settings)
    - `SET default_tablespace` / `SET default_table_access_method` (moved here if found mid-dump)
@@ -149,7 +149,7 @@ The canonical files (`results/prod.can.sql`, `results/staging.can.sql`) can also
 
 ```bash
 # Canonicalize a single dump with table-internal ordering, stripping owners
-pg-dump-compare --canonical prod.sql -o prod.can.sql -oti -no-owner
+pg-dump-compare --canonical prod.sql -o prod.can.sql -oti -no-roles
 ```
 
 ## Development
@@ -164,13 +164,13 @@ Tests include unit tests for the parser and canonicalizer, whitespace-behaviour 
 
 ```bash
 node dist/cli.js --canonical tests/fixtures/dump1.sql \
-    -o tests/fixtures/dump1.oti-no-owner.can.sql -oti -no-owner
+    -o tests/fixtures/dump1.oti-no-roles.can.sql -oti -no-roles
 
 node dist/cli.js --canonical tests/fixtures/dump3.sql \
     -o tests/fixtures/dump3.can.sql
 
 node dist/cli.js tests/fixtures/dump1.sql tests/fixtures/dump2.sql \
-    -o tests/fixtures -rep-roles "_muleto_/_in_"
+    -o tests/fixtures -in-roles "_muleto_/_in_"
 ```
 
 Then commit the updated fixtures — the git diff serves as a record of exactly what changed in the output.

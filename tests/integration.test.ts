@@ -68,17 +68,17 @@ describe('integration — canonicalize dump3 (no options)', () => {
   });
 });
 
-// ─── compare dump1 vs dump2 with -rep-roles _muleto_/_in_ ────────────────────
+// ─── compare dump1 vs dump2 with -in-roles _muleto_/_in_ ────────────────────
 
 const REP_ROLES = '_muleto_/_in_';
 
-describe(`integration — diff dump1 vs dump2 (-rep-roles ${REP_ROLES})`, () => {
+describe(`integration — diff dump1 vs dump2 (-in-roles ${REP_ROLES})`, () => {
   let tmpDir: string;
 
   before(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pg-dump-compare-test-'));
 
-    const opts = { repRoles: REP_ROLES };
+    const opts = { inRoles: REP_ROLES };
     const can1 = canonicalize(parseDump(read('dump1.sql')), opts);
     const can2 = canonicalize(parseDump(read('dump2.sql')), opts);
 
@@ -95,21 +95,21 @@ describe(`integration — diff dump1 vs dump2 (-rep-roles ${REP_ROLES})`, () => 
   });
 
   it('canonical dump1 matches golden file dump1.can.sql', () => {
-    const result = canonicalize(parseDump(read('dump1.sql')), { repRoles: REP_ROLES });
+    const result = canonicalize(parseDump(read('dump1.sql')), { inRoles: REP_ROLES });
     const golden = read('dump1.can.sql');
     assert.strictEqual(result, golden,
       'dump1 canonical differs from golden. Regenerate:\n' +
       '  node dist/cli.js tests/fixtures/dump1.sql tests/fixtures/dump2.sql ' +
-      `-o tests/fixtures -rep-roles ${REP_ROLES}`);
+      `-o tests/fixtures -in-roles ${REP_ROLES}`);
   });
 
   it('canonical dump2 matches golden file dump2.can.sql', () => {
-    const result = canonicalize(parseDump(read('dump2.sql')), { repRoles: REP_ROLES });
+    const result = canonicalize(parseDump(read('dump2.sql')), { inRoles: REP_ROLES });
     const golden = read('dump2.can.sql');
     assert.strictEqual(result, golden,
       'dump2 canonical differs from golden. Regenerate:\n' +
       '  node dist/cli.js tests/fixtures/dump1.sql tests/fixtures/dump2.sql ' +
-      `-o tests/fixtures -rep-roles ${REP_ROLES}`);
+      `-o tests/fixtures -in-roles ${REP_ROLES}`);
   });
 
   it('diff matches golden file only.diff', () => {
@@ -125,6 +125,6 @@ describe(`integration — diff dump1 vs dump2 (-rep-roles ${REP_ROLES})`, () => 
     assert.strictEqual(normalise(resultDiff), normalise(goldenDiff),
       'Diff output differs from golden. Regenerate:\n' +
       '  node dist/cli.js tests/fixtures/dump1.sql tests/fixtures/dump2.sql ' +
-      `-o tests/fixtures -rep-roles ${REP_ROLES}`);
+      `-o tests/fixtures -in-roles ${REP_ROLES}`);
   });
 });

@@ -61,6 +61,6 @@ export interface ParsedDump {
 export interface CanonicalOptions {
   noRoles?: boolean;
   canRoles?: boolean;
-  repRoles?: string;      // "SOURCE/TARGET" e.g. "_muleto_/_" or "_/_this_"
+  inRoles?: string;      // "SOURCE/TARGET" e.g. "_muleto_/_" or "_/_this_"
   orderTableInternally?: boolean;
 }

@@ -195,26 +195,26 @@ describe('canonicalize — owner options', () => {
   });
 });
 
-// ─── canonicalize — -rep-roles ────────────────────────────────────────────────
+// ─── canonicalize — -in-roles ────────────────────────────────────────────────
 
-describe('canonicalize — -rep-roles', () => {
+describe('canonicalize — -in-roles', () => {
   // dump1 uses roles like "ejemplo_muleto_owner", "ejemplo_muleto_admin"
   // middle part is "_muleto_"
 
   it('replaces middle part in OWNER TO', () => {
-    const result = canonicalize(parseDump(raw), { repRoles: '_muleto_/_prod_' });
+    const result = canonicalize(parseDump(raw), { inRoles: '_muleto_/_prod_' });
     assert.ok(result.includes('OWNER TO ejemplo_prod_owner'), 'middle part not replaced in OWNER TO');
     assert.ok(!result.includes('ejemplo_muleto_owner'), 'original role still present');
   });
 
   it('replaces middle part in GRANT', () => {
-    const result = canonicalize(parseDump(raw), { repRoles: '_muleto_/_prod_' });
+    const result = canonicalize(parseDump(raw), { inRoles: '_muleto_/_prod_' });
     assert.ok(result.includes('TO ejemplo_prod_admin;'), 'middle part not replaced in GRANT');
   });
 
   it('removes middle part when target is "_"', () => {
     // _muleto_ → _ : ejemplo_muleto_owner → ejemplo_owner
-    const result = canonicalize(parseDump(raw), { repRoles: '_muleto_/_' });
+    const result = canonicalize(parseDump(raw), { inRoles: '_muleto_/_' });
     assert.ok(result.includes('OWNER TO ejemplo_owner'), 'middle not removed');
     assert.ok(!result.includes('ejemplo_muleto_'), 'original middle still present');
   });
@@ -229,7 +229,7 @@ describe('canonicalize — -rep-roles', () => {
       'CREATE TABLE public.foo (id integer);',
       'ALTER TABLE public.foo OWNER TO app_owner;',
     ].join('\n');
-    const result = canonicalize(parseDump(simple), { repRoles: '_/_staging_' });
+    const result = canonicalize(parseDump(simple), { inRoles: '_/_staging_' });
     assert.ok(result.includes('OWNER TO app_staging_owner'), `expected app_staging_owner, got: ${result}`);
   });
 
@@ -243,7 +243,7 @@ describe('canonicalize — -rep-roles', () => {
       'CREATE TABLE public.foo (id integer);',
       'ALTER TABLE public.foo OWNER TO ab_x_x_cd;',
     ].join('\n');
-    const result = canonicalize(parseDump(simple), { repRoles: '_x_/_y_' });
+    const result = canonicalize(parseDump(simple), { inRoles: '_x_/_y_' });
     assert.ok(result.includes('OWNER TO ab_x_x_cd'), 'ambiguous role was replaced');
   });
 });

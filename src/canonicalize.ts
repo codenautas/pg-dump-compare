@@ -153,23 +153,23 @@ function repRole(role: string, source: string, target: string): string {
   return role.slice(0, foundAt) + target + role.slice(foundAt + source.length);
 }
 
-function parseRepRoles(repRoles: string): { source: string; target: string } | null {
-  const slashIdx = repRoles.indexOf('/');
+function parseInRoles(inRoles: string): { source: string; target: string } | null {
+  const slashIdx = inRoles.indexOf('/');
   if (slashIdx === -1) return null;
-  return { source: repRoles.slice(0, slashIdx), target: repRoles.slice(slashIdx + 1) };
+  return { source: inRoles.slice(0, slashIdx), target: inRoles.slice(slashIdx + 1) };
 }
 
 function transformRole(role: string, opts: CanonicalOptions): string {
   if (opts.canRoles) return shortenRole(role);
-  if (opts.repRoles) {
-    const parsed = parseRepRoles(opts.repRoles);
+  if (opts.inRoles) {
+    const parsed = parseInRoles(opts.inRoles);
     if (parsed) return repRole(role, parsed.source, parsed.target);
   }
   return role;
 }
 
 function applyRoles(lines: string[], opts: CanonicalOptions): string[] {
-  if (!opts.noRoles && !opts.canRoles && !opts.repRoles) return lines;
+  if (!opts.noRoles && !opts.canRoles && !opts.inRoles) return lines;
 
   const result: string[] = [];
   for (const line of lines) {
