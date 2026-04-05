@@ -8,9 +8,11 @@ import { generateDiff }   from './diff';
 import { CanonicalOptions } from './types';
 
 function parseOwnerOpts(args: string[]): CanonicalOptions {
+  const repRolesIdx = args.indexOf('-rep-roles');
   return {
-    noOwner: args.includes('-no-owner'),
-    canOwner: args.includes('-can-owner'),
+    noRoles: args.includes('-no-roles'),
+    canRoles: args.includes('-can-roles'),
+    repRoles: repRolesIdx >= 0 ? args[repRolesIdx + 1] : undefined,
     orderTableInternally: args.includes('-oti'),
   };
 }

@@ -160,38 +160,91 @@ describe('canonicalize — owner options', () => {
     assert.ok(result.includes('OWNER TO'));
   });
 
-  it('removes all OWNER TO with -no-owner', () => {
-    const result = canonicalize(parseDump(raw), { noOwner: true });
-    assert.ok(!result.includes('OWNER TO'), 'OWNER TO still present with -no-owner');
+  it('removes all OWNER TO with -no-roles', () => {
+    const result = canonicalize(parseDump(raw), { noRoles: true });
+    assert.ok(!result.includes('OWNER TO'), 'OWNER TO still present with -no-roles');
   });
 
-  it('simplifies owner name with -can-owner', () => {
-    const result = canonicalize(parseDump(raw), { canOwner: true });
+  it('simplifies owner name with -can-roles', () => {
+    const result = canonicalize(parseDump(raw), { canRoles: true });
     assert.ok(result.includes('OWNER TO _owner'), 'expected simplified "owner" suffix');
     assert.ok(!result.includes('OWNER TO ejemplo_muleto_owner'), 'full owner name still present');
   });
 
-  it('removes GRANT lines with -no-owner', () => {
-    const result = canonicalize(parseDump(raw), { noOwner: true });
-    assert.ok(!/^GRANT\b/m.test(result), 'GRANT lines still present with -no-owner');
+  it('removes GRANT lines with -no-roles', () => {
+    const result = canonicalize(parseDump(raw), { noRoles: true });
+    assert.ok(!/^GRANT\b/m.test(result), 'GRANT lines still present with -no-roles');
   });
 
-  it('simplifies role in GRANT with -can-owner', () => {
-    const result = canonicalize(parseDump(raw), { canOwner: true });
+  it('simplifies role in GRANT with -can-roles', () => {
+    const result = canonicalize(parseDump(raw), { canRoles: true });
     assert.ok(!result.includes('TO ejemplo_muleto_admin'), 'full role name in GRANT still present');
     assert.ok(result.includes('TO _admin;'), 'expected simplified role in GRANT');
   });
 
-  it('simplifies role in CREATE POLICY with -can-owner', () => {
-    const result = canonicalize(parseDump(raw), { canOwner: true });
+  it('simplifies role in CREATE POLICY with -can-roles', () => {
+    const result = canonicalize(parseDump(raw), { canRoles: true });
     assert.ok(!result.includes('TO ejemplo_muleto_admin USING'), 'full role name in POLICY still present');
   });
 
-  it('removes TO clause from CREATE POLICY with -no-owner', () => {
-    const result = canonicalize(parseDump(raw), { noOwner: true });
+  it('removes TO clause from CREATE POLICY with -no-roles', () => {
+    const result = canonicalize(parseDump(raw), { noRoles: true });
     // Policy should still exist but without TO role_name
     assert.ok(result.search(/^CREATE POLICY\b/m) !== -1, 'CREATE POLICY missing entirely');
-    assert.ok(!result.includes('TO ejemplo_muleto_admin'), 'role name still in POLICY with -no-owner');
+    assert.ok(!result.includes('TO ejemplo_muleto_admin'), 'role name still in POLICY with -no-roles');
+  });
+});
+
+// ─── canonicalize — -rep-roles ────────────────────────────────────────────────
+
+describe('canonicalize — -rep-roles', () => {
+  // dump1 uses roles like "ejemplo_muleto_owner", "ejemplo_muleto_admin"
+  // middle part is "_muleto_"
+
+  it('replaces middle part in OWNER TO', () => {
+    const result = canonicalize(parseDump(raw), { repRoles: '_muleto_/_prod_' });
+    assert.ok(result.includes('OWNER TO ejemplo_prod_owner'), 'middle part not replaced in OWNER TO');
+    assert.ok(!result.includes('ejemplo_muleto_owner'), 'original role still present');
+  });
+
+  it('replaces middle part in GRANT', () => {
+    const result = canonicalize(parseDump(raw), { repRoles: '_muleto_/_prod_' });
+    assert.ok(result.includes('TO ejemplo_prod_admin;'), 'middle part not replaced in GRANT');
+  });
+
+  it('removes middle part when target is "_"', () => {
+    // _muleto_ → _ : ejemplo_muleto_owner → ejemplo_owner
+    const result = canonicalize(parseDump(raw), { repRoles: '_muleto_/_' });
+    assert.ok(result.includes('OWNER TO ejemplo_owner'), 'middle not removed');
+    assert.ok(!result.includes('ejemplo_muleto_'), 'original middle still present');
+  });
+
+  it('adds a middle part when source is "_"', () => {
+    // _ → _staging_ : app_owner (no middle) → app_staging_owner
+    const simple = [
+      '--',
+      '-- Name: foo; Type: TABLE; Schema: public; Owner: app_owner',
+      '--',
+      '',
+      'CREATE TABLE public.foo (id integer);',
+      'ALTER TABLE public.foo OWNER TO app_owner;',
+    ].join('\n');
+    const result = canonicalize(parseDump(simple), { repRoles: '_/_staging_' });
+    assert.ok(result.includes('OWNER TO app_staging_owner'), `expected app_staging_owner, got: ${result}`);
+  });
+
+  it('does not replace when source appears more than once', () => {
+    // role "ab_x_x_cd" has "_x_" twice — should not be replaced
+    const simple = [
+      '--',
+      '-- Name: foo; Type: TABLE; Schema: public; Owner: ab_x_x_cd',
+      '--',
+      '',
+      'CREATE TABLE public.foo (id integer);',
+      'ALTER TABLE public.foo OWNER TO ab_x_x_cd;',
+    ].join('\n');
+    const result = canonicalize(parseDump(simple), { repRoles: '_x_/_y_' });
+    assert.ok(result.includes('OWNER TO ab_x_x_cd'), 'ambiguous role was replaced');
   });
 });
 

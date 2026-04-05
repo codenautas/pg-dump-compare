@@ -126,39 +126,73 @@ function getConstraintSubtype(sqlLines: string[]): string {
   return 'OTHER';
 }
 
-// ─── owner handling ──────────────────────────────────────────────────────────
+// ─── role handling ───────────────────────────────────────────────────────────
 
 function shortenRole(role: string): string {
   const idx = role.lastIndexOf('_');
   return idx >= 0 ? role.slice(idx) : role;
 }
 
-function applyOwner(lines: string[], opts: CanonicalOptions): string[] {
-  if (!opts.noOwner && !opts.canOwner) return lines;
+// Replace the middle part of a role name.
+// SOURCE and TARGET are patterns like '_' (no middle) or '_word_' (with middle).
+// Replacement only happens when SOURCE appears exactly once in the role name.
+function repRole(role: string, source: string, target: string): string {
+  // Find all non-overlapping occurrences, advancing by 1 each time to also
+  // catch patterns that share boundary underscores (e.g. "_x_" in "a_x_x_b")
+  let count = 0;
+  let foundAt = -1;
+  let pos = 0;
+  while (pos <= role.length - source.length) {
+    const idx = role.indexOf(source, pos);
+    if (idx === -1) break;
+    count++;
+    foundAt = idx;
+    pos = idx + 1;  // advance by 1 to detect overlapping/shared-underscore matches
+  }
+  if (count !== 1) return role;
+  return role.slice(0, foundAt) + target + role.slice(foundAt + source.length);
+}
+
+function parseRepRoles(repRoles: string): { source: string; target: string } | null {
+  const slashIdx = repRoles.indexOf('/');
+  if (slashIdx === -1) return null;
+  return { source: repRoles.slice(0, slashIdx), target: repRoles.slice(slashIdx + 1) };
+}
+
+function transformRole(role: string, opts: CanonicalOptions): string {
+  if (opts.canRoles) return shortenRole(role);
+  if (opts.repRoles) {
+    const parsed = parseRepRoles(opts.repRoles);
+    if (parsed) return repRole(role, parsed.source, parsed.target);
+  }
+  return role;
+}
+
+function applyRoles(lines: string[], opts: CanonicalOptions): string[] {
+  if (!opts.noRoles && !opts.canRoles && !opts.repRoles) return lines;
 
   const result: string[] = [];
   for (const line of lines) {
     // ALTER ... OWNER TO role
     if (OWNER_LINE_RE.test(line)) {
-      if (opts.noOwner) continue;
-      result.push(line.replace(/\bOWNER\s+TO\s+([\w$]+)/i, (_, r: string) => `OWNER TO ${shortenRole(r)}`));
+      if (opts.noRoles) continue;
+      result.push(line.replace(/\bOWNER\s+TO\s+([\w$]+)/i, (_, r: string) => `OWNER TO ${transformRole(r, opts)}`));
       continue;
     }
 
     // GRANT ... TO role
     if (GRANT_LINE_RE.test(line)) {
-      if (opts.noOwner) continue;
-      result.push(line.replace(/\bTO\s+([\w$]+)\s*;/i, (_, r: string) => `TO ${shortenRole(r)};`));
+      if (opts.noRoles) continue;
+      result.push(line.replace(/\bTO\s+([\w$]+)\s*;/i, (_, r: string) => `TO ${transformRole(r, opts)};`));
       continue;
     }
 
     // CREATE POLICY ... TO role  (TO clause is on the same line in pg_dump output)
     if (POLICY_LINE_RE.test(line)) {
-      if (opts.noOwner) {
-        // Remove the TO role clause; keep the rest of the policy definition
+      if (opts.noRoles) {
         result.push(line.replace(/\s+TO\s+[\w$]+\b/i, ''));
       } else {
-        result.push(line.replace(/\bTO\s+([\w$]+)\b/i, (_, r: string) => `TO ${shortenRole(r)}`));
+        result.push(line.replace(/\bTO\s+([\w$]+)\b/i, (_, r: string) => `TO ${transformRole(r, opts)}`));
       }
       continue;
     }
@@ -336,7 +370,7 @@ function renderBlock(block: Block, opts: CanonicalOptions): string[] {
   if (opts.orderTableInternally && block.toc.type.toUpperCase() === 'TABLE') {
     lines = reorderTableInternally(lines);
   }
-  lines = applyOwner(lines, opts);
+  lines = applyRoles(lines, opts);
   return trimTrailingBlanks(lines);
 }
 

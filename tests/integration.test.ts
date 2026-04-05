@@ -5,13 +5,13 @@
  * fixture. If behaviour changes intentionally, regenerate the fixtures:
  *
  *   node dist/cli.js --canonical tests/fixtures/dump1.sql \
- *       -o tests/fixtures/dump1.oti-no-owner.can.sql -oti -no-owner
+ *       -o tests/fixtures/dump1.oti-no-roles.can.sql -oti -no-roles
  *
  *   node dist/cli.js --canonical tests/fixtures/dump3.sql \
  *       -o tests/fixtures/dump3.can.sql
  *
  *   node dist/cli.js tests/fixtures/dump1.sql tests/fixtures/dump2.sql \
- *       -o tests/fixtures -can-owner
+ *       -o tests/fixtures -can-roles
  *
  * Then commit the updated fixtures so the diff is visible in git history.
  */
@@ -31,23 +31,23 @@ function read(name: string): string {
   return fs.readFileSync(path.join(FIXTURES, name), 'utf-8');
 }
 
-// ─── canonicalize dump1 with -oti -no-owner ───────────────────────────────────
+// ─── canonicalize dump1 with -oti -no-roles ───────────────────────────────────
 
-describe('integration — canonicalize dump1 (-oti -no-owner)', () => {
+describe('integration — canonicalize dump1 (-oti -no-roles)', () => {
   let result: string;
   before(() => {
     result = canonicalize(parseDump(read('dump1.sql')), {
       orderTableInternally: true,
-      noOwner: true,
+      noRoles: true,
     });
   });
 
-  it('matches golden file dump1.oti-no-owner.can.sql', () => {
-    const golden = read('dump1.oti-no-owner.can.sql');
+  it('matches golden file dump1.oti-no-roles.can.sql', () => {
+    const golden = read('dump1.oti-no-roles.can.sql');
     assert.strictEqual(result, golden,
       'Output differs from golden file. If the change is intentional, regenerate:\n' +
       '  node dist/cli.js --canonical tests/fixtures/dump1.sql ' +
-      '-o tests/fixtures/dump1.oti-no-owner.can.sql -oti -no-owner');
+      '-o tests/fixtures/dump1.oti-no-roles.can.sql -oti -no-roles');
   });
 });
 
@@ -68,16 +68,16 @@ describe('integration — canonicalize dump3 (no options)', () => {
   });
 });
 
-// ─── compare dump1 vs dump2 with -can-owner ───────────────────────────────────
+// ─── compare dump1 vs dump2 with -can-roles ───────────────────────────────────
 
-describe('integration — diff dump1 vs dump2 (-can-owner)', () => {
+describe('integration — diff dump1 vs dump2 (-can-roles)', () => {
   let tmpDir: string;
 
   before(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pg-dump-compare-test-'));
 
-    const can1 = canonicalize(parseDump(read('dump1.sql')), { canOwner: true });
-    const can2 = canonicalize(parseDump(read('dump2.sql')), { canOwner: true });
+    const can1 = canonicalize(parseDump(read('dump1.sql')), { canRoles: true });
+    const can2 = canonicalize(parseDump(read('dump2.sql')), { canRoles: true });
 
     const file1 = path.join(tmpDir, 'dump1.can.sql');
     const file2 = path.join(tmpDir, 'dump2.can.sql');
@@ -92,21 +92,21 @@ describe('integration — diff dump1 vs dump2 (-can-owner)', () => {
   });
 
   it('canonical dump1 matches golden file dump1.can.sql', () => {
-    const result = canonicalize(parseDump(read('dump1.sql')), { canOwner: true });
+    const result = canonicalize(parseDump(read('dump1.sql')), { canRoles: true });
     const golden = read('dump1.can.sql');
     assert.strictEqual(result, golden,
       'dump1 canonical differs from golden. Regenerate:\n' +
       '  node dist/cli.js tests/fixtures/dump1.sql tests/fixtures/dump2.sql ' +
-      '-o tests/fixtures -can-owner');
+      '-o tests/fixtures -can-roles');
   });
 
   it('canonical dump2 matches golden file dump2.can.sql', () => {
-    const result = canonicalize(parseDump(read('dump2.sql')), { canOwner: true });
+    const result = canonicalize(parseDump(read('dump2.sql')), { canRoles: true });
     const golden = read('dump2.can.sql');
     assert.strictEqual(result, golden,
       'dump2 canonical differs from golden. Regenerate:\n' +
       '  node dist/cli.js tests/fixtures/dump1.sql tests/fixtures/dump2.sql ' +
-      '-o tests/fixtures -can-owner');
+      '-o tests/fixtures -can-roles');
   });
 
   it('diff matches golden file only.diff', () => {
@@ -123,6 +123,6 @@ describe('integration — diff dump1 vs dump2 (-can-owner)', () => {
     assert.strictEqual(normalise(resultDiff), normalise(goldenDiff),
       'Diff output differs from golden. Regenerate:\n' +
       '  node dist/cli.js tests/fixtures/dump1.sql tests/fixtures/dump2.sql ' +
-      '-o tests/fixtures -can-owner');
+      '-o tests/fixtures -can-roles');
   });
 });
