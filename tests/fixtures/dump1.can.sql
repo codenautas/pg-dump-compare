@@ -23,19 +23,19 @@ SET default_table_access_method = heap;
 CREATE SCHEMA his;
 
 
-ALTER SCHEMA his OWNER TO _owner;
+ALTER SCHEMA his OWNER TO ejemplo_in_owner;
 
 
 CREATE SCHEMA ejemplo;
 
 
-ALTER SCHEMA ejemplo OWNER TO _owner;
+ALTER SCHEMA ejemplo OWNER TO ejemplo_in_owner;
 
 
 CREATE SCHEMA temp;
 
 
-ALTER SCHEMA temp OWNER TO _owner;
+ALTER SCHEMA temp OWNER TO ejemplo_in_owner;
 
 
 CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;
@@ -51,7 +51,7 @@ CREATE TYPE ejemplo.time_range AS RANGE (
 );
 
 
-ALTER TYPE ejemplo.time_range OWNER TO _owner;
+ALTER TYPE ejemplo.time_range OWNER TO ejemplo_in_owner;
 
 
 CREATE FUNCTION ejemplo.annio_abrir(p_annio integer) RETURNS void
@@ -66,7 +66,7 @@ END;
 $$;
 
 
-ALTER FUNCTION ejemplo.annio_abrir(p_annio integer) OWNER TO _owner;
+ALTER FUNCTION ejemplo.annio_abrir(p_annio integer) OWNER TO ejemplo_in_owner;
 
 
 CREATE FUNCTION ejemplo.annio_preparar(p_annio integer) RETURNS void
@@ -80,7 +80,7 @@ END;
 $$;
 
 
-ALTER FUNCTION ejemplo.annio_preparar(p_annio integer) OWNER TO _owner;
+ALTER FUNCTION ejemplo.annio_preparar(p_annio integer) OWNER TO ejemplo_in_owner;
 
 
 CREATE FUNCTION ejemplo.archivo_borrar_trg() RETURNS trigger
@@ -95,7 +95,7 @@ end;
 $$;
 
 
-ALTER FUNCTION ejemplo.archivo_borrar_trg() OWNER TO _owner;
+ALTER FUNCTION ejemplo.archivo_borrar_trg() OWNER TO ejemplo_in_owner;
 
 
 CREATE FUNCTION ejemplo.enance_table(table_name text, primary_key_fields text, method text DEFAULT 'iud'::text) RETURNS text
@@ -129,7 +129,7 @@ end;
 $_$;
 
 
-ALTER FUNCTION ejemplo.enance_table(table_name text, primary_key_fields text, method text) OWNER TO _owner;
+ALTER FUNCTION ejemplo.enance_table(table_name text, primary_key_fields text, method text) OWNER TO ejemplo_in_owner;
 
 
 CREATE FUNCTION ejemplo.fecha_actual() RETURNS date
@@ -140,7 +140,7 @@ CREATE FUNCTION ejemplo.fecha_actual() RETURNS date
 $$;
 
 
-ALTER FUNCTION ejemplo.fecha_actual() OWNER TO _owner;
+ALTER FUNCTION ejemplo.fecha_actual() OWNER TO ejemplo_in_owner;
 
 
 CREATE FUNCTION ejemplo.fecha_hora_actual() RETURNS timestamp without time zone
@@ -154,7 +154,7 @@ CREATE FUNCTION ejemplo.fecha_hora_actual() RETURNS timestamp without time zone
 $$;
 
 
-ALTER FUNCTION ejemplo.fecha_hora_actual() OWNER TO _owner;
+ALTER FUNCTION ejemplo.fecha_hora_actual() OWNER TO ejemplo_in_owner;
 
 
 CREATE FUNCTION ejemplo.get_app_user(p_var text DEFAULT 'user'::text) RETURNS text
@@ -164,7 +164,7 @@ CREATE FUNCTION ejemplo.get_app_user(p_var text DEFAULT 'user'::text) RETURNS te
 $$;
 
 
-ALTER FUNCTION ejemplo.get_app_user(p_var text) OWNER TO _owner;
+ALTER FUNCTION ejemplo.get_app_user(p_var text) OWNER TO ejemplo_in_owner;
 
 
 CREATE FUNCTION ejemplo.time_subtype_diff(x time without time zone, y time without time zone) RETURNS double precision
@@ -172,7 +172,7 @@ CREATE FUNCTION ejemplo.time_subtype_diff(x time without time zone, y time witho
     AS $$SELECT EXTRACT(EPOCH FROM (x - y))$$;
 
 
-ALTER FUNCTION ejemplo.time_subtype_diff(x time without time zone, y time without time zone) OWNER TO _owner;
+ALTER FUNCTION ejemplo.time_subtype_diff(x time without time zone, y time without time zone) OWNER TO ejemplo_in_owner;
 
 
 CREATE FUNCTION his.changes_trg() RETURNS trigger
@@ -236,7 +236,7 @@ end;
 $$;
 
 
-ALTER FUNCTION his.changes_trg() OWNER TO _owner;
+ALTER FUNCTION his.changes_trg() OWNER TO ejemplo_in_owner;
 
 
 CREATE PROCEDURE ejemplo.set_app_user(IN p_username text)
@@ -276,7 +276,7 @@ end;
 $$;
 
 
-ALTER PROCEDURE ejemplo.set_app_user(IN p_username text) OWNER TO _owner;
+ALTER PROCEDURE ejemplo.set_app_user(IN p_username text) OWNER TO ejemplo_in_owner;
 
 
 CREATE SEQUENCE ejemplo.secuencia_bitacora
@@ -287,7 +287,7 @@ CREATE SEQUENCE ejemplo.secuencia_bitacora
     CACHE 1;
 
 
-ALTER SEQUENCE ejemplo.secuencia_bitacora OWNER TO _owner;
+ALTER SEQUENCE ejemplo.secuencia_bitacora OWNER TO ejemplo_in_owner;
 
 
 CREATE TABLE ejemplo.annios (
@@ -299,7 +299,7 @@ CREATE TABLE ejemplo.annios (
 );
 
 
-ALTER TABLE ejemplo.annios OWNER TO _owner;
+ALTER TABLE ejemplo.annios OWNER TO ejemplo_in_owner;
 
 
 CREATE TABLE ejemplo.grupos (
@@ -313,7 +313,7 @@ CREATE TABLE ejemplo.grupos (
 );
 
 
-ALTER TABLE ejemplo.grupos OWNER TO _owner;
+ALTER TABLE ejemplo.grupos OWNER TO ejemplo_in_owner;
 
 
 CREATE TABLE ejemplo.horarios_cod (
@@ -322,7 +322,7 @@ CREATE TABLE ejemplo.horarios_cod (
 );
 
 
-ALTER TABLE ejemplo.horarios_cod OWNER TO _owner;
+ALTER TABLE ejemplo.horarios_cod OWNER TO ejemplo_in_owner;
 
 
 CREATE TABLE ejemplo.niveles_educativos (
@@ -333,7 +333,7 @@ CREATE TABLE ejemplo.niveles_educativos (
 );
 
 
-ALTER TABLE ejemplo.niveles_educativos OWNER TO _owner;
+ALTER TABLE ejemplo.niveles_educativos OWNER TO ejemplo_in_owner;
 
 
 CREATE TABLE his.bitacora (
@@ -356,7 +356,7 @@ CREATE TABLE his.bitacora (
 );
 
 
-ALTER TABLE his.bitacora OWNER TO _owner;
+ALTER TABLE his.bitacora OWNER TO ejemplo_in_owner;
 
 
 CREATE TABLE his.changes (
@@ -374,7 +374,7 @@ CREATE TABLE his.changes (
 );
 
 
-ALTER TABLE his.changes OWNER TO _owner;
+ALTER TABLE his.changes OWNER TO ejemplo_in_owner;
 
 
 CREATE VIEW ejemplo.horarios AS
@@ -391,7 +391,7 @@ CREATE VIEW ejemplo.horarios AS
      JOIN ejemplo.horarios_dds hd USING (horario));
 
 
-ALTER VIEW ejemplo.horarios OWNER TO _owner;
+ALTER VIEW ejemplo.horarios OWNER TO ejemplo_in_owner;
 
 
 ALTER TABLE ONLY ejemplo.clases
@@ -430,7 +430,7 @@ CREATE TRIGGER changes_trg AFTER INSERT OR DELETE OR UPDATE ON ejemplo.clases FO
 CREATE TRIGGER changes_trg AFTER INSERT OR DELETE OR UPDATE ON ejemplo.grupos FOR EACH ROW EXECUTE FUNCTION his.changes_trg('clase,grupo');
 
 
-CREATE POLICY "bp delete" ON ejemplo.novedades_horarias AS RESTRICTIVE FOR DELETE TO _admin USING (((( SELECT roles.puede_cargar_todo
+CREATE POLICY "bp delete" ON ejemplo.novedades_horarias AS RESTRICTIVE FOR DELETE TO ejemplo_in_admin USING (((( SELECT roles.puede_cargar_todo
    FROM ejemplo.roles
   WHERE (roles.rol = ejemplo.get_app_user('rol'::text))) OR ( SELECT roles.puede_cargar_propio
    FROM ejemplo.roles
@@ -449,17 +449,17 @@ END OR ( SELECT roles.puede_corregir_el_pasado
   WHERE (roles.rol = ejemplo.get_app_user('rol'::text))))));
 
 
-CREATE POLICY "bp base" ON ejemplo.novedades_vigentes TO _admin USING (true);
+CREATE POLICY "bp base" ON ejemplo.novedades_vigentes TO ejemplo_in_admin USING (true);
 
 
-CREATE POLICY "bp base" ON ejemplo.personas TO _admin USING (true);
+CREATE POLICY "bp base" ON ejemplo.personas TO ejemplo_in_admin USING (true);
 
 
-CREATE POLICY "bp base" ON ejemplo.trayectoria_laboral TO _admin USING (true);
+CREATE POLICY "bp base" ON ejemplo.trayectoria_laboral TO ejemplo_in_admin USING (true);
 
 
-GRANT USAGE ON SCHEMA ejemplo TO _admin;
-GRANT USAGE ON SCHEMA ejemplo TO _fichador;
+GRANT USAGE ON SCHEMA ejemplo TO ejemplo_in_admin;
+GRANT USAGE ON SCHEMA ejemplo TO ejemplo_modulo_fichador;
 
 
 ALTER TABLE ejemplo.novedades_registradas ENABLE ROW LEVEL SECURITY;
@@ -468,22 +468,22 @@ ALTER TABLE ejemplo.novedades_registradas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ejemplo.novedades_vigentes ENABLE ROW LEVEL SECURITY;
 
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.annios TO _admin;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.annios TO ejemplo_in_admin;
 
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.fechas TO _admin;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.fechas TO ejemplo_in_admin;
 
 
-GRANT SELECT(texto),INSERT(texto),UPDATE(texto) ON TABLE ejemplo.fichadas_recibidas TO _fichador;
+GRANT SELECT(texto),INSERT(texto),UPDATE(texto) ON TABLE ejemplo.fichadas_recibidas TO ejemplo_modulo_fichador;
 
 
-GRANT SELECT(dispositivo),INSERT(dispositivo),UPDATE(dispositivo) ON TABLE ejemplo.fichadas_recibidas TO _fichador;
+GRANT SELECT(dispositivo),INSERT(dispositivo),UPDATE(dispositivo) ON TABLE ejemplo.fichadas_recibidas TO ejemplo_modulo_fichador;
 
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.trayectoria_laboral TO _admin;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.trayectoria_laboral TO ejemplo_in_admin;
 
 
-GRANT USAGE ON SCHEMA temp TO _admin;
+GRANT USAGE ON SCHEMA temp TO ejemplo_in_admin;
 
 
 

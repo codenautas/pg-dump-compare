@@ -1,13 +1,13 @@
 diff --git "a/tests\\fixtures\\dump1.can.sql" "b/tests\\fixtures\\dump2.can.sql"
-index 8c02fec..c8df772 100644
+index aa572c4..729096d 100644
 --- "a/tests\\fixtures\\dump1.can.sql"
 +++ "b/tests\\fixtures\\dump2.can.sql"
 @@ -23,7 +23,7 @@ SET default_table_access_method = heap;
  CREATE SCHEMA his;
  
  
--ALTER SCHEMA his OWNER TO _owner;
-+ALTER SCHEMA his OWNER TO _admin;
+-ALTER SCHEMA his OWNER TO ejemplo_in_owner;
++ALTER SCHEMA his OWNER TO ejemplo_in_admin;
  
  
  CREATE SCHEMA ejemplo;
@@ -23,7 +23,7 @@ index 8c02fec..c8df772 100644
    end if;
  end;
 @@ -290,18 +290,6 @@ CREATE SEQUENCE ejemplo.secuencia_bitacora
- ALTER SEQUENCE ejemplo.secuencia_bitacora OWNER TO _owner;
+ ALTER SEQUENCE ejemplo.secuencia_bitacora OWNER TO ejemplo_in_owner;
  
  
 -CREATE TABLE ejemplo.annios (
@@ -35,13 +35,13 @@ index 8c02fec..c8df772 100644
 -);
 -
 -
--ALTER TABLE ejemplo.annios OWNER TO _owner;
+-ALTER TABLE ejemplo.annios OWNER TO ejemplo_in_owner;
 -
 -
  CREATE TABLE ejemplo.grupos (
      clase text NOT NULL,
      grupo text NOT NULL,
-@@ -338,11 +326,11 @@ ALTER TABLE ejemplo.niveles_educativos OWNER TO _owner;
+@@ -338,11 +326,11 @@ ALTER TABLE ejemplo.niveles_educativos OWNER TO ejemplo_in_owner;
  
  CREATE TABLE his.bitacora (
      id bigint DEFAULT nextval('ejemplo.secuencia_bitacora'::regclass) NOT NULL,
@@ -59,7 +59,7 @@ index 8c02fec..c8df772 100644
      end_date timestamp without time zone,
      has_error boolean,
 @@ -377,6 +365,15 @@ CREATE TABLE his.changes (
- ALTER TABLE his.changes OWNER TO _owner;
+ ALTER TABLE his.changes OWNER TO ejemplo_in_owner;
  
  
 +CREATE TABLE skip_chantes (
@@ -68,7 +68,7 @@ index 8c02fec..c8df772 100644
 +    primary key (cha_schema)
 +);
 +
-+ALTER TABLE skip_chantes OWNER TO _owner;
++ALTER TABLE skip_chantes OWNER TO postgres;
 +
 +
  CREATE VIEW ejemplo.horarios AS

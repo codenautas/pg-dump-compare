@@ -21,33 +21,33 @@ SET row_security = off;
 
 --
 -- TOC entry 13 (class 2615 OID 527582)
--- Name: his; Type: SCHEMA; Schema: -; Owner: ejemplo_muleto_owner
+-- Name: his; Type: SCHEMA; Schema: -; Owner: ejemplo_in_owner
 --
 
 CREATE SCHEMA his;
 
 
-ALTER SCHEMA his OWNER TO ejemplo_muleto_admin;
+ALTER SCHEMA his OWNER TO ejemplo_in_admin;
 
 --
 -- TOC entry 16 (class 2615 OID 527583)
--- Name: ejemplo; Type: SCHEMA; Schema: -; Owner: ejemplo_muleto_owner
+-- Name: ejemplo; Type: SCHEMA; Schema: -; Owner: ejemplo_in_owner
 --
 
 CREATE SCHEMA ejemplo;
 
 
-ALTER SCHEMA ejemplo OWNER TO ejemplo_muleto_owner;
+ALTER SCHEMA ejemplo OWNER TO ejemplo_in_owner;
 
 --
 -- TOC entry 17 (class 2615 OID 132620)
--- Name: temp; Type: SCHEMA; Schema: -; Owner: ejemplo_muleto_owner
+-- Name: temp; Type: SCHEMA; Schema: -; Owner: ejemplo_in_owner
 --
 
 CREATE SCHEMA temp;
 
 
-ALTER SCHEMA temp OWNER TO ejemplo_muleto_owner;
+ALTER SCHEMA temp OWNER TO ejemplo_in_owner;
 
 --
 -- TOC entry 2 (class 3079 OID 24265)
@@ -68,7 +68,7 @@ COMMENT ON EXTENSION btree_gist IS 'support for indexing common datatypes in GiS
 
 --
 -- TOC entry 349 (class 1255 OID 527587)
--- Name: time_subtype_diff(time without time zone, time without time zone); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: time_subtype_diff(time without time zone, time without time zone); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE FUNCTION ejemplo.time_subtype_diff(x time without time zone, y time without time zone) RETURNS double precision
@@ -76,12 +76,12 @@ CREATE FUNCTION ejemplo.time_subtype_diff(x time without time zone, y time witho
     AS $$SELECT EXTRACT(EPOCH FROM (x - y))$$;
 
 
-ALTER FUNCTION ejemplo.time_subtype_diff(x time without time zone, y time without time zone) OWNER TO ejemplo_muleto_owner;
+ALTER FUNCTION ejemplo.time_subtype_diff(x time without time zone, y time without time zone) OWNER TO ejemplo_in_owner;
 
 
 --
 -- TOC entry 466 (class 1255 OID 527598)
--- Name: changes_trg(); Type: FUNCTION; Schema: his; Owner: ejemplo_muleto_owner
+-- Name: changes_trg(); Type: FUNCTION; Schema: his; Owner: ejemplo_in_owner
 --
 
 CREATE FUNCTION his.changes_trg() RETURNS trigger
@@ -145,10 +145,10 @@ end;
 $$;
 
 
-ALTER FUNCTION his.changes_trg() OWNER TO ejemplo_muleto_owner;
+ALTER FUNCTION his.changes_trg() OWNER TO ejemplo_in_owner;
 --
 -- TOC entry 1225 (class 1247 OID 527591)
--- Name: time_range; Type: TYPE; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: time_range; Type: TYPE; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE TYPE ejemplo.time_range AS RANGE (
@@ -158,11 +158,11 @@ CREATE TYPE ejemplo.time_range AS RANGE (
 );
 
 
-ALTER TYPE ejemplo.time_range OWNER TO ejemplo_muleto_owner;
+ALTER TYPE ejemplo.time_range OWNER TO ejemplo_in_owner;
 
 --
 -- TOC entry 476 (class 1255 OID 527601)
--- Name: annio_abrir(integer); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: annio_abrir(integer); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE FUNCTION ejemplo.annio_abrir(p_annio integer) RETURNS void
@@ -177,11 +177,11 @@ END;
 $$;
 
 
-ALTER FUNCTION ejemplo.annio_abrir(p_annio integer) OWNER TO ejemplo_muleto_owner;
+ALTER FUNCTION ejemplo.annio_abrir(p_annio integer) OWNER TO ejemplo_in_owner;
 
 --
 -- TOC entry 343 (class 1255 OID 527602)
--- Name: annio_preparar(integer); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: annio_preparar(integer); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE FUNCTION ejemplo.annio_preparar(p_annio integer) RETURNS void
@@ -195,12 +195,12 @@ END;
 $$;
 
 
-ALTER FUNCTION ejemplo.annio_preparar(p_annio integer) OWNER TO ejemplo_muleto_owner;
+ALTER FUNCTION ejemplo.annio_preparar(p_annio integer) OWNER TO ejemplo_in_owner;
 
 
 --
 -- TOC entry 356 (class 1255 OID 527603)
--- Name: archivo_borrar_trg(); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: archivo_borrar_trg(); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE FUNCTION ejemplo.archivo_borrar_trg() RETURNS trigger
@@ -215,11 +215,11 @@ end;
 $$;
 
 
-ALTER FUNCTION ejemplo.archivo_borrar_trg() OWNER TO ejemplo_muleto_owner;
+ALTER FUNCTION ejemplo.archivo_borrar_trg() OWNER TO ejemplo_in_owner;
 
 --
 -- TOC entry 414 (class 1255 OID 527604)
--- Name: fecha_actual(); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: fecha_actual(); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE FUNCTION ejemplo.fecha_actual() RETURNS date
@@ -230,7 +230,7 @@ CREATE FUNCTION ejemplo.fecha_actual() RETURNS date
 $$;
 
 
-ALTER FUNCTION ejemplo.fecha_actual() OWNER TO ejemplo_muleto_owner;
+ALTER FUNCTION ejemplo.fecha_actual() OWNER TO ejemplo_in_owner;
 
 SET default_tablespace = '';
 
@@ -239,7 +239,7 @@ SET default_table_access_method = heap;
 
 --
 -- TOC entry 395 (class 1255 OID 527636)
--- Name: enance_table(text, text, text); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: enance_table(text, text, text); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE FUNCTION ejemplo.enance_table(table_name text, primary_key_fields text, method text DEFAULT 'iud'::text) RETURNS text
@@ -273,11 +273,11 @@ end;
 $_$;
 
 
-ALTER FUNCTION ejemplo.enance_table(table_name text, primary_key_fields text, method text) OWNER TO ejemplo_muleto_owner;
+ALTER FUNCTION ejemplo.enance_table(table_name text, primary_key_fields text, method text) OWNER TO ejemplo_in_owner;
 
 --
 -- TOC entry 421 (class 1255 OID 527637)
--- Name: fecha_hora_actual(); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: fecha_hora_actual(); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE FUNCTION ejemplo.fecha_hora_actual() RETURNS timestamp without time zone
@@ -291,12 +291,12 @@ CREATE FUNCTION ejemplo.fecha_hora_actual() RETURNS timestamp without time zone
 $$;
 
 
-ALTER FUNCTION ejemplo.fecha_hora_actual() OWNER TO ejemplo_muleto_owner;
+ALTER FUNCTION ejemplo.fecha_hora_actual() OWNER TO ejemplo_in_owner;
 
 
 --
 -- TOC entry 397 (class 1255 OID 527639)
--- Name: get_app_user(text); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: get_app_user(text); Type: FUNCTION; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE FUNCTION ejemplo.get_app_user(p_var text DEFAULT 'user'::text) RETURNS text
@@ -306,11 +306,11 @@ CREATE FUNCTION ejemplo.get_app_user(p_var text DEFAULT 'user'::text) RETURNS te
 $$;
 
 
-ALTER FUNCTION ejemplo.get_app_user(p_var text) OWNER TO ejemplo_muleto_owner;
+ALTER FUNCTION ejemplo.get_app_user(p_var text) OWNER TO ejemplo_in_owner;
 
 --
 -- TOC entry 514 (class 1255 OID 527680)
--- Name: set_app_user(text); Type: PROCEDURE; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: set_app_user(text); Type: PROCEDURE; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE PROCEDURE ejemplo.set_app_user(IN p_username text)
@@ -350,12 +350,12 @@ end;
 $$;
 
 
-ALTER PROCEDURE ejemplo.set_app_user(IN p_username text) OWNER TO ejemplo_muleto_owner;
+ALTER PROCEDURE ejemplo.set_app_user(IN p_username text) OWNER TO ejemplo_in_owner;
 
 
 --
 -- TOC entry 243 (class 1259 OID 527686)
--- Name: secuencia_bitacora; Type: SEQUENCE; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: secuencia_bitacora; Type: SEQUENCE; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE SEQUENCE ejemplo.secuencia_bitacora
@@ -366,11 +366,11 @@ CREATE SEQUENCE ejemplo.secuencia_bitacora
     CACHE 1;
 
 
-ALTER SEQUENCE ejemplo.secuencia_bitacora OWNER TO ejemplo_muleto_owner;
+ALTER SEQUENCE ejemplo.secuencia_bitacora OWNER TO ejemplo_in_owner;
 
 --
 -- TOC entry 244 (class 1259 OID 527687)
--- Name: bitacora; Type: TABLE; Schema: his; Owner: ejemplo_muleto_owner
+-- Name: bitacora; Type: TABLE; Schema: his; Owner: ejemplo_in_owner
 --
 
 CREATE TABLE his.bitacora (
@@ -393,11 +393,11 @@ CREATE TABLE his.bitacora (
 );
 
 
-ALTER TABLE his.bitacora OWNER TO ejemplo_muleto_owner;
+ALTER TABLE his.bitacora OWNER TO ejemplo_in_owner;
 
 --
 -- TOC entry 245 (class 1259 OID 527699)
--- Name: changes; Type: TABLE; Schema: his; Owner: ejemplo_muleto_owner
+-- Name: changes; Type: TABLE; Schema: his; Owner: ejemplo_in_owner
 --
 
 CREATE TABLE his.changes (
@@ -415,11 +415,11 @@ CREATE TABLE his.changes (
 );
 
 
-ALTER TABLE his.changes OWNER TO ejemplo_muleto_owner;
+ALTER TABLE his.changes OWNER TO ejemplo_in_owner;
 
 --
 -- TOC entry 2691 (class 1259 OID 527892)
--- Name: skip_chantes; Type: TABLE; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: skip_chantes; Type: TABLE; Schema: ejemplo; Owner: postgres
 --
 
 CREATE TABLE skip_chantes (
@@ -428,12 +428,12 @@ CREATE TABLE skip_chantes (
     primary key (cha_schema)
 );
 
-ALTER TABLE skip_chantes OWNER TO ejemplo_muleto_owner;
+ALTER TABLE skip_chantes OWNER TO postgres;
 
 
 --
 -- TOC entry 269 (class 1259 OID 527892)
--- Name: grupos; Type: TABLE; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: grupos; Type: TABLE; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE TABLE ejemplo.grupos (
@@ -447,12 +447,12 @@ CREATE TABLE ejemplo.grupos (
 );
 
 
-ALTER TABLE ejemplo.grupos OWNER TO ejemplo_muleto_owner;
+ALTER TABLE ejemplo.grupos OWNER TO ejemplo_in_owner;
 
 
 --
 -- TOC entry 272 (class 1259 OID 527920)
--- Name: horarios; Type: VIEW; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: horarios; Type: VIEW; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE VIEW ejemplo.horarios AS
@@ -469,11 +469,11 @@ CREATE VIEW ejemplo.horarios AS
      JOIN ejemplo.horarios_dds hd USING (horario));
 
 
-ALTER VIEW ejemplo.horarios OWNER TO ejemplo_muleto_owner;
+ALTER VIEW ejemplo.horarios OWNER TO ejemplo_in_owner;
 
 --
 -- TOC entry 273 (class 1259 OID 527924)
--- Name: horarios_cod; Type: TABLE; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: horarios_cod; Type: TABLE; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE TABLE ejemplo.horarios_cod (
@@ -482,12 +482,12 @@ CREATE TABLE ejemplo.horarios_cod (
 );
 
 
-ALTER TABLE ejemplo.horarios_cod OWNER TO ejemplo_muleto_owner;
+ALTER TABLE ejemplo.horarios_cod OWNER TO ejemplo_in_owner;
 
 
 --
 -- TOC entry 279 (class 1259 OID 527966)
--- Name: niveles_educativos; Type: TABLE; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: niveles_educativos; Type: TABLE; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE TABLE ejemplo.niveles_educativos (
@@ -498,14 +498,14 @@ CREATE TABLE ejemplo.niveles_educativos (
 );
 
 
-ALTER TABLE ejemplo.niveles_educativos OWNER TO ejemplo_muleto_owner;
+ALTER TABLE ejemplo.niveles_educativos OWNER TO ejemplo_in_owner;
 
 
 
 --
 -- TOC entry 4875 (class 0 OID 527803)
 -- Dependencies: 258
--- Data for Name: capa_modalidades; Type: TABLE DATA; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Data for Name: capa_modalidades; Type: TABLE DATA; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 COPY ejemplo.capa_modalidades (modalidad, observaciones) FROM stdin;
@@ -527,7 +527,7 @@ Congreso	\N
 --
 -- TOC entry 4884 (class 0 OID 527876)
 -- Dependencies: 267
--- Data for Name: funciones; Type: TABLE DATA; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Data for Name: funciones; Type: TABLE DATA; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 INSERT INTO ejemplo.funciones (funcion, descripcion, cod_2024) VALUES
@@ -537,7 +537,7 @@ INSERT INTO ejemplo.funciones (funcion, descripcion, cod_2024) VALUES
 --
 -- TOC entry 4886 (class 0 OID 527892)
 -- Dependencies: 269
--- Data for Name: grupos; Type: TABLE DATA; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Data for Name: grupos; Type: TABLE DATA; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 COPY ejemplo.grupos (clase, grupo, descripcion) FROM stdin;
@@ -558,7 +558,7 @@ U	T	Todos
 --
 -- TOC entry 4889 (class 0 OID 527924)
 -- Dependencies: 273
--- Data for Name: horarios_cod; Type: TABLE DATA; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Data for Name: horarios_cod; Type: TABLE DATA; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 COPY ejemplo.horarios_cod (horario) FROM stdin;
@@ -581,7 +581,7 @@ MC	POSTGRADO COMPLETO
 --
 -- TOC entry 5039 (class 0 OID 0)
 -- Dependencies: 274
--- Name: idr_seq; Type: SEQUENCE SET; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: idr_seq; Type: SEQUENCE SET; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 SELECT pg_catalog.setval('ejemplo.idr_seq', 3469, true);
@@ -590,14 +590,14 @@ SELECT pg_catalog.setval('ejemplo.idr_seq', 3469, true);
 --
 -- TOC entry 5040 (class 0 OID 0)
 -- Dependencies: 282
--- Name: nov_per_importado_id_importacion_seq; Type: SEQUENCE SET; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: nov_per_importado_id_importacion_seq; Type: SEQUENCE SET; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 
 --
 -- TOC entry 5044 (class 0 OID 0)
 -- Dependencies: 243
--- Name: secuencia_bitacora; Type: SEQUENCE SET; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: secuencia_bitacora; Type: SEQUENCE SET; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 SELECT pg_catalog.setval('ejemplo.secuencia_bitacora', 3115, true);
@@ -605,7 +605,7 @@ SELECT pg_catalog.setval('ejemplo.secuencia_bitacora', 3115, true);
 
 --
 -- TOC entry 4263 (class 2606 OID 528367)
--- Name: bitacora bitacora_pkey; Type: CONSTRAINT; Schema: his; Owner: ejemplo_muleto_owner
+-- Name: bitacora bitacora_pkey; Type: CONSTRAINT; Schema: his; Owner: ejemplo_in_owner
 --
 
 ALTER TABLE ONLY his.bitacora
@@ -614,7 +614,7 @@ ALTER TABLE ONLY his.bitacora
 
 --
 -- TOC entry 4299 (class 2606 OID 528397)
--- Name: clases clases_nombre_key; Type: CONSTRAINT; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: clases clases_nombre_key; Type: CONSTRAINT; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 ALTER TABLE ONLY ejemplo.clases
@@ -623,7 +623,7 @@ ALTER TABLE ONLY ejemplo.clases
 
 --
 -- TOC entry 4301 (class 2606 OID 528399)
--- Name: clases clases_pkey; Type: CONSTRAINT; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: clases clases_pkey; Type: CONSTRAINT; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 ALTER TABLE ONLY ejemplo.clases
@@ -632,7 +632,7 @@ ALTER TABLE ONLY ejemplo.clases
 
 --
 -- TOC entry 4337 (class 2606 OID 528491)
--- Name: horarios_per sin superponer fechas; Type: CONSTRAINT; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: horarios_per sin superponer fechas; Type: CONSTRAINT; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 ALTER TABLE ONLY ejemplo.horarios_per
@@ -641,7 +641,7 @@ ALTER TABLE ONLY ejemplo.horarios_per
 
 --
 -- TOC entry 4302 (class 1259 OID 528536)
--- Name: clase 4 cod_novedades IDX; Type: INDEX; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: clase 4 cod_novedades IDX; Type: INDEX; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE INDEX "clase 4 cod_novedades IDX" ON ejemplo.cod_novedades USING btree (clase);
@@ -649,7 +649,7 @@ CREATE INDEX "clase 4 cod_novedades IDX" ON ejemplo.cod_novedades USING btree (c
 
 --
 -- TOC entry 4322 (class 1259 OID 528537)
--- Name: clase 4 grupos IDX; Type: INDEX; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: clase 4 grupos IDX; Type: INDEX; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE INDEX "clase 4 grupos IDX" ON ejemplo.grupos USING btree (clase);
@@ -657,7 +657,7 @@ CREATE INDEX "clase 4 grupos IDX" ON ejemplo.grupos USING btree (clase);
 
 --
 -- TOC entry 4610 (class 2620 OID 528624)
--- Name: clases changes_trg; Type: TRIGGER; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: clases changes_trg; Type: TRIGGER; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE TRIGGER changes_trg AFTER INSERT OR DELETE OR UPDATE ON ejemplo.clases FOR EACH ROW EXECUTE FUNCTION his.changes_trg('clase');
@@ -666,7 +666,7 @@ CREATE TRIGGER changes_trg AFTER INSERT OR DELETE OR UPDATE ON ejemplo.clases FO
 
 --
 -- TOC entry 4618 (class 2620 OID 528632)
--- Name: grupos changes_trg; Type: TRIGGER; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: grupos changes_trg; Type: TRIGGER; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 CREATE TRIGGER changes_trg AFTER INSERT OR DELETE OR UPDATE ON ejemplo.grupos FOR EACH ROW EXECUTE FUNCTION his.changes_trg('clase,grupo');
@@ -674,7 +674,7 @@ CREATE TRIGGER changes_trg AFTER INSERT OR DELETE OR UPDATE ON ejemplo.grupos FO
 
 --
 -- TOC entry 4509 (class 2606 OID 528692)
--- Name: adjuntos adjuntos tipos_adjunto REL; Type: FK CONSTRAINT; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: adjuntos adjuntos tipos_adjunto REL; Type: FK CONSTRAINT; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 ALTER TABLE ONLY ejemplo.adjuntos
@@ -683,7 +683,7 @@ ALTER TABLE ONLY ejemplo.adjuntos
 
 --
 -- TOC entry 4510 (class 2606 OID 528697)
--- Name: adjuntos_atributos adjuntos_atributos adjuntos REL; Type: FK CONSTRAINT; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: adjuntos_atributos adjuntos_atributos adjuntos REL; Type: FK CONSTRAINT; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 ALTER TABLE ONLY ejemplo.adjuntos_atributos
@@ -692,34 +692,34 @@ ALTER TABLE ONLY ejemplo.adjuntos_atributos
 
 --
 -- TOC entry 4832 (class 3256 OID 529144)
--- Name: novedades_vigentes bp base; Type: POLICY; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: novedades_vigentes bp base; Type: POLICY; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
-CREATE POLICY "bp base" ON ejemplo.novedades_vigentes TO ejemplo_muleto_admin USING (true);
+CREATE POLICY "bp base" ON ejemplo.novedades_vigentes TO ejemplo_in_admin USING (true);
 
 
 --
 -- TOC entry 4833 (class 3256 OID 529145)
--- Name: personas bp base; Type: POLICY; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: personas bp base; Type: POLICY; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
-CREATE POLICY "bp base" ON ejemplo.personas TO ejemplo_muleto_admin USING (true);
+CREATE POLICY "bp base" ON ejemplo.personas TO ejemplo_in_admin USING (true);
 
 
 --
 -- TOC entry 4834 (class 3256 OID 529146)
--- Name: trayectoria_laboral bp base; Type: POLICY; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: trayectoria_laboral bp base; Type: POLICY; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
-CREATE POLICY "bp base" ON ejemplo.trayectoria_laboral TO ejemplo_muleto_admin USING (true);
+CREATE POLICY "bp base" ON ejemplo.trayectoria_laboral TO ejemplo_in_admin USING (true);
 
 
 --
 -- TOC entry 4835 (class 3256 OID 529147)
--- Name: novedades_horarias bp delete; Type: POLICY; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: novedades_horarias bp delete; Type: POLICY; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
-CREATE POLICY "bp delete" ON ejemplo.novedades_horarias AS RESTRICTIVE FOR DELETE TO ejemplo_muleto_admin USING (((( SELECT roles.puede_cargar_todo
+CREATE POLICY "bp delete" ON ejemplo.novedades_horarias AS RESTRICTIVE FOR DELETE TO ejemplo_in_admin USING (((( SELECT roles.puede_cargar_todo
    FROM ejemplo.roles
   WHERE (roles.rol = ejemplo.get_app_user('rol'::text))) OR ( SELECT roles.puede_cargar_propio
    FROM ejemplo.roles
@@ -742,7 +742,7 @@ END OR ( SELECT roles.puede_corregir_el_pasado
 --
 -- TOC entry 4825 (class 0 OID 528016)
 -- Dependencies: 286
--- Name: novedades_registradas; Type: ROW SECURITY; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: novedades_registradas; Type: ROW SECURITY; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 ALTER TABLE ejemplo.novedades_registradas ENABLE ROW LEVEL SECURITY;
@@ -750,7 +750,7 @@ ALTER TABLE ejemplo.novedades_registradas ENABLE ROW LEVEL SECURITY;
 --
 -- TOC entry 4823 (class 0 OID 527648)
 -- Dependencies: 242
--- Name: novedades_vigentes; Type: ROW SECURITY; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: novedades_vigentes; Type: ROW SECURITY; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 ALTER TABLE ejemplo.novedades_vigentes ENABLE ROW LEVEL SECURITY;
@@ -758,45 +758,45 @@ ALTER TABLE ejemplo.novedades_vigentes ENABLE ROW LEVEL SECURITY;
 --
 -- TOC entry 4826 (class 0 OID 528118)
 -- Dependencies: 295
--- Name: personas; Type: ROW SECURITY; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: personas; Type: ROW SECURITY; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
-GRANT USAGE ON SCHEMA ejemplo TO ejemplo_muleto_admin;
+GRANT USAGE ON SCHEMA ejemplo TO ejemplo_in_admin;
 GRANT USAGE ON SCHEMA ejemplo TO ejemplo_modulo_fichador;
 
 
 --
 -- TOC entry 4945 (class 0 OID 0)
 -- Dependencies: 17
--- Name: SCHEMA temp; Type: ACL; Schema: -; Owner: ejemplo_muleto_owner
+-- Name: SCHEMA temp; Type: ACL; Schema: -; Owner: ejemplo_in_owner
 --
 
-GRANT USAGE ON SCHEMA temp TO ejemplo_muleto_admin;
+GRANT USAGE ON SCHEMA temp TO ejemplo_in_admin;
 
 
 --
 -- TOC entry 4947 (class 0 OID 0)
 -- Dependencies: 239
--- Name: TABLE annios; Type: ACL; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: TABLE annios; Type: ACL; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.annios TO ejemplo_muleto_admin;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.annios TO ejemplo_in_admin;
 
 
 --
 -- TOC entry 4948 (class 0 OID 0)
 -- Dependencies: 240
--- Name: TABLE fechas; Type: ACL; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: TABLE fechas; Type: ACL; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.fechas TO ejemplo_muleto_admin;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.fechas TO ejemplo_in_admin;
 
 
 
 --
 -- TOC entry 4981 (class 0 OID 0)
 -- Dependencies: 318 4975
--- Name: COLUMN fichadas_recibidas.texto; Type: ACL; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: COLUMN fichadas_recibidas.texto; Type: ACL; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 GRANT SELECT(texto),INSERT(texto),UPDATE(texto) ON TABLE ejemplo.fichadas_recibidas TO ejemplo_modulo_fichador;
@@ -805,7 +805,7 @@ GRANT SELECT(texto),INSERT(texto),UPDATE(texto) ON TABLE ejemplo.fichadas_recibi
 --
 -- TOC entry 4982 (class 0 OID 0)
 -- Dependencies: 318 4975
--- Name: COLUMN fichadas_recibidas.dispositivo; Type: ACL; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: COLUMN fichadas_recibidas.dispositivo; Type: ACL; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
 GRANT SELECT(dispositivo),INSERT(dispositivo),UPDATE(dispositivo) ON TABLE ejemplo.fichadas_recibidas TO ejemplo_modulo_fichador;
@@ -815,10 +815,10 @@ GRANT SELECT(dispositivo),INSERT(dispositivo),UPDATE(dispositivo) ON TABLE ejemp
 --
 -- TOC entry 5036 (class 0 OID 0)
 -- Dependencies: 315
--- Name: TABLE trayectoria_laboral; Type: ACL; Schema: ejemplo; Owner: ejemplo_muleto_owner
+-- Name: TABLE trayectoria_laboral; Type: ACL; Schema: ejemplo; Owner: ejemplo_in_owner
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.trayectoria_laboral TO ejemplo_muleto_admin;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.trayectoria_laboral TO ejemplo_in_admin;
 
 
 -- Completed on 2026-04-03 20:08:31
