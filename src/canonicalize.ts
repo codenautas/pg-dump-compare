@@ -215,6 +215,94 @@ function processFooter(footer: string[]): string[] {
   return trimTrailingBlanks(filtered);
 }
 
+// ─── CREATE TABLE internal ordering ──────────────────────────────────────────
+
+// Split the body lines of a CREATE TABLE (the lines between the opening '('
+// and the closing ');') into individual items, using top-level commas as
+// delimiters. Depth tracking handles nested parentheses in CHECK expressions.
+function splitTableItems(bodyLines: string[]): string[][] {
+  const items: string[][] = [];
+  let current: string[] = [];
+  let depth = 0;
+
+  for (const line of bodyLines) {
+    for (const ch of line) {
+      if (ch === '(') depth++;
+      else if (ch === ')') depth--;
+    }
+    const trimmed = line.trimEnd();
+    if (depth === 0 && trimmed.endsWith(',')) {
+      current.push(trimmed.slice(0, -1));
+      items.push(current);
+      current = [];
+    } else {
+      current.push(line);
+    }
+  }
+  if (current.some(l => l.trim() !== '')) items.push(current);
+  return items;
+}
+
+function tableItemSortKey(item: string[]): string {
+  const first = item.find(l => l.trim() !== '') ?? '';
+  const t = first.trim();
+  // CONSTRAINT "name" ... or CONSTRAINT name ...
+  const cm = t.match(/^CONSTRAINT\s+(?:"([^"]+)"|([\w$]+))/i);
+  if (cm) return cm[1] ?? cm[2] ?? t;
+  // Column: first identifier
+  const col = t.match(/^("?[\w$]+"?)/);
+  return col ? col[1].replace(/"/g, '') : t;
+}
+
+function reorderTableInternally(sqlLines: string[]): string[] {
+  const createIdx = sqlLines.findIndex(l => /^CREATE\s+(?:FOREIGN\s+)?TABLE\b/i.test(l));
+  if (createIdx === -1) return sqlLines;
+
+  // Find matching ');' tracking paren depth
+  let depth = 0;
+  let closeIdx = -1;
+  for (let i = createIdx; i < sqlLines.length; i++) {
+    for (const ch of sqlLines[i]) {
+      if (ch === '(') depth++;
+      else if (ch === ')') depth--;
+    }
+    if (depth === 0 && i > createIdx) { closeIdx = i; break; }
+  }
+  if (closeIdx === -1) return sqlLines;
+
+  const bodyLines = sqlLines.slice(createIdx + 1, closeIdx);
+  const items     = splitTableItems(bodyLines);
+
+  const columns:     string[][] = [];
+  const constraints: string[][] = [];
+  for (const item of items) {
+    const first = item.find(l => l.trim() !== '') ?? '';
+    if (/^\s*CONSTRAINT\b/i.test(first)) constraints.push(item);
+    else columns.push(item);
+  }
+
+  columns.sort((a, b) => tableItemSortKey(a).localeCompare(tableItemSortKey(b)));
+  constraints.sort((a, b) => tableItemSortKey(a).localeCompare(tableItemSortKey(b)));
+
+  const sorted = [...columns, ...constraints];
+
+  // Rebuild with trailing comma on every item (including the last)
+  const newBody: string[] = [];
+  for (const item of sorted) {
+    const itemLines = [...item];
+    let last = itemLines.length - 1;
+    while (last > 0 && itemLines[last].trim() === '') last--;
+    itemLines[last] = itemLines[last] + ',';
+    for (const l of itemLines) newBody.push(l);
+  }
+
+  return [
+    ...sqlLines.slice(0, createIdx + 1),
+    ...newBody,
+    ...sqlLines.slice(closeIdx),
+  ];
+}
+
 // ─── block rendering ─────────────────────────────────────────────────────────
 
 // Remove inline COPY blocks that appear without their own TABLE DATA header
@@ -239,6 +327,9 @@ function removeCopyBlocks(lines: string[]): string[] {
 function renderBlock(block: Block, opts: CanonicalOptions): string[] {
   let lines = removeCopyBlocks(block.sqlLines);
   lines = lines.filter(l => !EXTRA_SETTING_RE.test(l));
+  if (opts.orderTableInternally && block.toc.type.toUpperCase() === 'TABLE') {
+    lines = reorderTableInternally(lines);
+  }
   lines = applyOwner(lines, opts);
   return trimTrailingBlanks(lines);
 }

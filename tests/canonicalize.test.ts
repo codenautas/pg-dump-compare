@@ -269,6 +269,86 @@ describe('dump3 — pg_dump without TOC entries', () => {
   });
 });
 
+// ─── -oti: order table internally ────────────────────────────────────────────
+
+describe('canonicalize — -oti (order table internally)', () => {
+  // Wrap in a block header so parseDump recognises it as a TABLE block
+  function wrapTable(body: string): string {
+    return [
+      '--',
+      '-- Name: grupos; Type: TABLE; Schema: ejemplo; Owner: ejemplo_muleto_owner',
+      '--',
+      '',
+      body,
+    ].join('\n');
+  }
+
+  const TABLE_BODY = [
+    'CREATE TABLE ejemplo.grupos (',
+    '    clase text NOT NULL,',
+    '    grupo text NOT NULL,',
+    '    descripcion text,',
+    "    CONSTRAINT \"clase<>''\" CHECK ((clase <> ''::text)),",
+    "    CONSTRAINT \"grupo<>''\" CHECK ((grupo <> ''::text)),",
+    "    CONSTRAINT \"descripcion<>''\" CHECK ((descripcion <> ''::text))",
+    ');',
+    '',
+    'ALTER TABLE ejemplo.grupos OWNER TO ejemplo_muleto_owner;',
+  ].join('\n');
+
+  const TABLE_SQL = wrapTable(TABLE_BODY);
+
+  function canonical(sql: string, opts = {}): string {
+    return canonicalize(parseDump(sql), opts);
+  }
+
+  it('sorts columns alphabetically', () => {
+    const result = canonical(TABLE_SQL, { orderTableInternally: true });
+    const cols = result.split('\n')
+      .filter(l => /^\s+(clase|grupo|descripcion)\s/.test(l))
+      .map(l => l.trim().split(/\s+/)[0]);
+    assert.deepStrictEqual(cols, ['clase', 'descripcion', 'grupo']);
+  });
+
+  it('places columns before constraints', () => {
+    const result = canonical(TABLE_SQL, { orderTableInternally: true });
+    const lastCol  = result.lastIndexOf('    grupo text');
+    const firstCon = result.indexOf('    CONSTRAINT');
+    assert.ok(lastCol < firstCon, 'columns should come before constraints');
+  });
+
+  it('sorts constraints alphabetically', () => {
+    const result = canonical(TABLE_SQL, { orderTableInternally: true });
+    const names = [...result.matchAll(/CONSTRAINT "([^"]+)"/g)].map(m => m[1]);
+    const sorted = [...names].sort((a, b) => a.localeCompare(b));
+    assert.deepStrictEqual(names, sorted, `constraints not sorted: ${names.join(', ')}`);
+  });
+
+  it('adds trailing comma on last element', () => {
+    const result = canonical(TABLE_SQL, { orderTableInternally: true });
+    // The last item before ');' should end with ','
+    const lines = result.split('\n');
+    const closeIdx = lines.findIndex(l => /^\s*\);/.test(l));
+    assert.ok(closeIdx > 0, 'closing ); not found');
+    let lastItem = closeIdx - 1;
+    while (lastItem > 0 && lines[lastItem].trim() === '') lastItem--;
+    assert.ok(lines[lastItem].trimEnd().endsWith(','),
+      `last item before ); does not end with comma: ${JSON.stringify(lines[lastItem])}`);
+  });
+
+  it('is idempotent with -oti', () => {
+    const first  = canonical(TABLE_SQL, { orderTableInternally: true });
+    const second = canonical(first, { orderTableInternally: true });
+    assert.strictEqual(first, second, 'not idempotent with -oti');
+  });
+
+  it('does not affect output without -oti', () => {
+    const with_oti    = canonical(TABLE_SQL, { orderTableInternally: true });
+    const without_oti = canonical(TABLE_SQL, {});
+    assert.notStrictEqual(with_oti, without_oti, '-oti should change output for unsorted table');
+  });
+});
+
 // ─── canonicalize — idempotency ───────────────────────────────────────────────
 
 describe('canonicalize — idempotency', () => {

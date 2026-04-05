@@ -61,4 +61,5 @@ export interface ParsedDump {
 export interface CanonicalOptions {
   noOwner?: boolean;
   canOwner?: boolean;
+  orderTableInternally?: boolean;
 }

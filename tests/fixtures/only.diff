@@ -1,0 +1,76 @@
+diff --git "a/tests\\fixtures\\dump1.can.sql" "b/tests\\fixtures\\dump2.can.sql"
+index 8c02fec..c8df772 100644
+--- "a/tests\\fixtures\\dump1.can.sql"
++++ "b/tests\\fixtures\\dump2.can.sql"
+@@ -23,7 +23,7 @@ SET default_table_access_method = heap;
+ CREATE SCHEMA his;
+ 
+ 
+-ALTER SCHEMA his OWNER TO _owner;
++ALTER SCHEMA his OWNER TO _admin;
+ 
+ 
+ CREATE SCHEMA ejemplo;
+@@ -228,8 +228,8 @@ begin
+     return new;
+   else
+     insert into "his".changes 
+-      (cha_schema     , cha_table    , cha_old_pk, cha_op, cha_old_value, cha_who      , cha_when         , cha_context) values
+-      (tg_table_schema, tg_table_name, v_old_pk  , tg_op , v_old_values , session_user , clock_timestamp(), v_context  );
++      (cha_schema     , cha_table    , cha_old_pk, cha_op, cha_old_value, cha_who      , cha_when         ) values
++      (tg_table_schema, tg_table_name, v_old_pk  , tg_op , v_old_values , session_user , clock_timestamp());
+     return null;
+   end if;
+ end;
+@@ -290,18 +290,6 @@ CREATE SEQUENCE ejemplo.secuencia_bitacora
+ ALTER SEQUENCE ejemplo.secuencia_bitacora OWNER TO _owner;
+ 
+ 
+-CREATE TABLE ejemplo.annios (
+-    annio integer NOT NULL,
+-    abierto boolean DEFAULT false NOT NULL,
+-    horario_habitual_desde time without time zone,
+-    horario_habitual_hasta time without time zone,
+-    anterior integer
+-);
+-
+-
+-ALTER TABLE ejemplo.annios OWNER TO _owner;
+-
+-
+ CREATE TABLE ejemplo.grupos (
+     clase text NOT NULL,
+     grupo text NOT NULL,
+@@ -338,11 +326,11 @@ ALTER TABLE ejemplo.niveles_educativos OWNER TO _owner;
+ 
+ CREATE TABLE his.bitacora (
+     id bigint DEFAULT nextval('ejemplo.secuencia_bitacora'::regclass) NOT NULL,
+-    procedure_name text NOT NULL,
+-    parameters text NOT NULL,
+-    username text NOT NULL,
+-    machine_id text NOT NULL,
+-    navigator text NOT NULL,
++    "procedure_name" text NOT NULL,
++    parameters text,
++    username text,
++    machine_id text,
++    navigator text,
+     init_date timestamp without time zone NOT NULL,
+     end_date timestamp without time zone,
+     has_error boolean,
+@@ -377,6 +365,15 @@ CREATE TABLE his.changes (
+ ALTER TABLE his.changes OWNER TO _owner;
+ 
+ 
++CREATE TABLE skip_chantes (
++    cha_schema text,
++    cha_table text,
++    primary key (cha_schema)
++);
++
++ALTER TABLE skip_chantes OWNER TO _owner;
++
++
+ CREATE VIEW ejemplo.horarios AS
+  SELECT hp.idper,
+     hd.dds,

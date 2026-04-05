@@ -11,6 +11,7 @@ function parseOwnerOpts(args: string[]): CanonicalOptions {
   return {
     noOwner: args.includes('-no-owner'),
     canOwner: args.includes('-can-owner'),
+    orderTableInternally: args.includes('-oti'),
   };
 }
 

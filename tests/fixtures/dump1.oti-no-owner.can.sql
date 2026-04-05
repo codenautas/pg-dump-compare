@@ -23,19 +23,10 @@ SET default_table_access_method = heap;
 CREATE SCHEMA his;
 
 
-ALTER SCHEMA his OWNER TO ejemplo_muleto_owner;
-
-
 CREATE SCHEMA ejemplo;
 
 
-ALTER SCHEMA ejemplo OWNER TO ejemplo_muleto_owner;
-
-
 CREATE SCHEMA temp;
-
-
-ALTER SCHEMA temp OWNER TO ejemplo_muleto_owner;
 
 
 CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;
@@ -51,9 +42,6 @@ CREATE TYPE ejemplo.time_range AS RANGE (
 );
 
 
-ALTER TYPE ejemplo.time_range OWNER TO ejemplo_muleto_owner;
-
-
 CREATE FUNCTION ejemplo.annio_abrir(p_annio integer) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
@@ -64,9 +52,6 @@ BEGIN
   CALL actualizar_novedades_vigentes(make_date(p_annio,1,1), make_date(p_annio,12,31));
 END;
 $$;
-
-
-ALTER FUNCTION ejemplo.annio_abrir(p_annio integer) OWNER TO ejemplo_muleto_owner;
 
 
 CREATE FUNCTION ejemplo.annio_preparar(p_annio integer) RETURNS void
@@ -80,9 +65,6 @@ END;
 $$;
 
 
-ALTER FUNCTION ejemplo.annio_preparar(p_annio integer) OWNER TO ejemplo_muleto_owner;
-
-
 CREATE FUNCTION ejemplo.archivo_borrar_trg() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -93,9 +75,6 @@ begin
   return old;
 end;
 $$;
-
-
-ALTER FUNCTION ejemplo.archivo_borrar_trg() OWNER TO ejemplo_muleto_owner;
 
 
 CREATE FUNCTION ejemplo.enance_table(table_name text, primary_key_fields text, method text DEFAULT 'iud'::text) RETURNS text
@@ -129,18 +108,12 @@ end;
 $_$;
 
 
-ALTER FUNCTION ejemplo.enance_table(table_name text, primary_key_fields text, method text) OWNER TO ejemplo_muleto_owner;
-
-
 CREATE FUNCTION ejemplo.fecha_actual() RETURNS date
     LANGUAGE sql STABLE
     AS $$
 
     SELECT date_trunc('day', fecha_hora_actual());
 $$;
-
-
-ALTER FUNCTION ejemplo.fecha_actual() OWNER TO ejemplo_muleto_owner;
 
 
 CREATE FUNCTION ejemplo.fecha_hora_actual() RETURNS timestamp without time zone
@@ -154,9 +127,6 @@ CREATE FUNCTION ejemplo.fecha_hora_actual() RETURNS timestamp without time zone
 $$;
 
 
-ALTER FUNCTION ejemplo.fecha_hora_actual() OWNER TO ejemplo_muleto_owner;
-
-
 CREATE FUNCTION ejemplo.get_app_user(p_var text DEFAULT 'user'::text) RETURNS text
     LANGUAGE sql STABLE
     AS $$
@@ -164,15 +134,9 @@ CREATE FUNCTION ejemplo.get_app_user(p_var text DEFAULT 'user'::text) RETURNS te
 $$;
 
 
-ALTER FUNCTION ejemplo.get_app_user(p_var text) OWNER TO ejemplo_muleto_owner;
-
-
 CREATE FUNCTION ejemplo.time_subtype_diff(x time without time zone, y time without time zone) RETURNS double precision
     LANGUAGE sql IMMUTABLE STRICT
     AS $$SELECT EXTRACT(EPOCH FROM (x - y))$$;
-
-
-ALTER FUNCTION ejemplo.time_subtype_diff(x time without time zone, y time without time zone) OWNER TO ejemplo_muleto_owner;
 
 
 CREATE FUNCTION his.changes_trg() RETURNS trigger
@@ -236,9 +200,6 @@ end;
 $$;
 
 
-ALTER FUNCTION his.changes_trg() OWNER TO ejemplo_muleto_owner;
-
-
 CREATE PROCEDURE ejemplo.set_app_user(IN p_username text)
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
@@ -276,9 +237,6 @@ end;
 $$;
 
 
-ALTER PROCEDURE ejemplo.set_app_user(IN p_username text) OWNER TO ejemplo_muleto_owner;
-
-
 CREATE SEQUENCE ejemplo.secuencia_bitacora
     START WITH 1
     INCREMENT BY 1
@@ -287,94 +245,73 @@ CREATE SEQUENCE ejemplo.secuencia_bitacora
     CACHE 1;
 
 
-ALTER SEQUENCE ejemplo.secuencia_bitacora OWNER TO ejemplo_muleto_owner;
-
-
 CREATE TABLE ejemplo.annios (
-    annio integer NOT NULL,
     abierto boolean DEFAULT false NOT NULL,
+    annio integer NOT NULL,
+    anterior integer,
     horario_habitual_desde time without time zone,
     horario_habitual_hasta time without time zone,
-    anterior integer
 );
-
-
-ALTER TABLE ejemplo.annios OWNER TO ejemplo_muleto_owner;
 
 
 CREATE TABLE ejemplo.grupos (
     clase text NOT NULL,
-    grupo text NOT NULL,
     descripcion text,
+    grupo text NOT NULL,
     CONSTRAINT "clase<>''" CHECK ((clase <> ''::text)),
     CONSTRAINT "descripcion<>''" CHECK ((descripcion <> ''::text)),
     CONSTRAINT "grupo<>''" CHECK ((grupo <> ''::text)),
-    CONSTRAINT "palabra corta y solo mayusculas en grupo" CHECK ((grupo ~ similar_to_escape('[A-Z][A-Z0-9]{0,9}|[1-9]\d{0,10}'::text)))
+    CONSTRAINT "palabra corta y solo mayusculas en grupo" CHECK ((grupo ~ similar_to_escape('[A-Z][A-Z0-9]{0,9}|[1-9]\d{0,10}'::text))),
 );
-
-
-ALTER TABLE ejemplo.grupos OWNER TO ejemplo_muleto_owner;
 
 
 CREATE TABLE ejemplo.horarios_cod (
     horario text NOT NULL,
-    CONSTRAINT "horario<>''" CHECK ((horario <> ''::text))
+    CONSTRAINT "horario<>''" CHECK ((horario <> ''::text)),
 );
-
-
-ALTER TABLE ejemplo.horarios_cod OWNER TO ejemplo_muleto_owner;
 
 
 CREATE TABLE ejemplo.niveles_educativos (
     nivel_educativo text NOT NULL,
     nombre text,
     CONSTRAINT "nivel_educativo<>''" CHECK ((nivel_educativo <> ''::text)),
-    CONSTRAINT "nombre<>''" CHECK ((nombre <> ''::text))
+    CONSTRAINT "nombre<>''" CHECK ((nombre <> ''::text)),
 );
 
 
-ALTER TABLE ejemplo.niveles_educativos OWNER TO ejemplo_muleto_owner;
-
-
 CREATE TABLE his.bitacora (
+    end_date timestamp without time zone,
+    end_status text,
+    has_error boolean,
     id bigint DEFAULT nextval('ejemplo.secuencia_bitacora'::regclass) NOT NULL,
-    procedure_name text NOT NULL,
-    parameters text NOT NULL,
-    username text NOT NULL,
+    init_date timestamp without time zone NOT NULL,
     machine_id text NOT NULL,
     navigator text NOT NULL,
-    init_date timestamp without time zone NOT NULL,
-    end_date timestamp without time zone,
-    has_error boolean,
-    end_status text,
+    parameters text NOT NULL,
+    procedure_name text NOT NULL,
+    username text NOT NULL,
     CONSTRAINT "end_status<>''" CHECK ((end_status <> ''::text)),
     CONSTRAINT "machine_id<>''" CHECK ((machine_id <> ''::text)),
     CONSTRAINT "navigator<>''" CHECK ((navigator <> ''::text)),
     CONSTRAINT "parameters<>''" CHECK ((parameters <> ''::text)),
     CONSTRAINT "procedure_name<>''" CHECK ((procedure_name <> ''::text)),
-    CONSTRAINT "username<>''" CHECK ((username <> ''::text))
+    CONSTRAINT "username<>''" CHECK ((username <> ''::text)),
 );
-
-
-ALTER TABLE his.bitacora OWNER TO ejemplo_muleto_owner;
 
 
 CREATE TABLE his.changes (
+    cha_column text,
+    cha_context text,
+    cha_new_pk jsonb,
+    cha_new_value jsonb,
+    cha_old_pk jsonb,
+    cha_old_value jsonb,
+    cha_op text,
     cha_schema text,
     cha_table text,
-    cha_new_pk jsonb,
-    cha_old_pk jsonb,
-    cha_column text,
-    cha_op text,
-    cha_new_value jsonb,
-    cha_old_value jsonb,
-    cha_who text,
     cha_when timestamp without time zone,
-    cha_context text
+    cha_who text,
 );
-
-
-ALTER TABLE his.changes OWNER TO ejemplo_muleto_owner;
 
 
 CREATE VIEW ejemplo.horarios AS
@@ -389,9 +326,6 @@ CREATE VIEW ejemplo.horarios AS
     hp.lapso_fechas
    FROM (ejemplo.horarios_per hp
      JOIN ejemplo.horarios_dds hd USING (horario));
-
-
-ALTER VIEW ejemplo.horarios OWNER TO ejemplo_muleto_owner;
 
 
 ALTER TABLE ONLY ejemplo.clases
@@ -430,7 +364,7 @@ CREATE TRIGGER changes_trg AFTER INSERT OR DELETE OR UPDATE ON ejemplo.clases FO
 CREATE TRIGGER changes_trg AFTER INSERT OR DELETE OR UPDATE ON ejemplo.grupos FOR EACH ROW EXECUTE FUNCTION his.changes_trg('clase,grupo');
 
 
-CREATE POLICY "bp delete" ON ejemplo.novedades_horarias AS RESTRICTIVE FOR DELETE TO ejemplo_muleto_admin USING (((( SELECT roles.puede_cargar_todo
+CREATE POLICY "bp delete" ON ejemplo.novedades_horarias AS RESTRICTIVE FOR DELETE USING (((( SELECT roles.puede_cargar_todo
    FROM ejemplo.roles
   WHERE (roles.rol = ejemplo.get_app_user('rol'::text))) OR ( SELECT roles.puede_cargar_propio
    FROM ejemplo.roles
@@ -449,41 +383,19 @@ END OR ( SELECT roles.puede_corregir_el_pasado
   WHERE (roles.rol = ejemplo.get_app_user('rol'::text))))));
 
 
-CREATE POLICY "bp base" ON ejemplo.novedades_vigentes TO ejemplo_muleto_admin USING (true);
+CREATE POLICY "bp base" ON ejemplo.novedades_vigentes USING (true);
 
 
-CREATE POLICY "bp base" ON ejemplo.personas TO ejemplo_muleto_admin USING (true);
+CREATE POLICY "bp base" ON ejemplo.personas USING (true);
 
 
-CREATE POLICY "bp base" ON ejemplo.trayectoria_laboral TO ejemplo_muleto_admin USING (true);
-
-
-GRANT USAGE ON SCHEMA ejemplo TO ejemplo_muleto_admin;
-GRANT USAGE ON SCHEMA ejemplo TO ejemplo_modulo_fichador;
+CREATE POLICY "bp base" ON ejemplo.trayectoria_laboral USING (true);
 
 
 ALTER TABLE ejemplo.novedades_registradas ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE ejemplo.novedades_vigentes ENABLE ROW LEVEL SECURITY;
-
-
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.annios TO ejemplo_muleto_admin;
-
-
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.fechas TO ejemplo_muleto_admin;
-
-
-GRANT SELECT(texto),INSERT(texto),UPDATE(texto) ON TABLE ejemplo.fichadas_recibidas TO ejemplo_modulo_fichador;
-
-
-GRANT SELECT(dispositivo),INSERT(dispositivo),UPDATE(dispositivo) ON TABLE ejemplo.fichadas_recibidas TO ejemplo_modulo_fichador;
-
-
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.trayectoria_laboral TO ejemplo_muleto_admin;
-
-
-GRANT USAGE ON SCHEMA temp TO ejemplo_muleto_admin;
 
 
 
