@@ -71,7 +71,7 @@ When this flag is set, the columns and constraints inside each `CREATE TABLE` st
 
 1. **Columns** are sorted alphabetically by column name.
 2. **Constraints** (`CONSTRAINT … CHECK`, `CONSTRAINT … UNIQUE`, etc.) follow, also sorted alphabetically by constraint name.
-3. A trailing comma is added after the last item, making future diffs cleaner.
+3. Commas are treated as separators: every item except the last has a comma, and the last item does not — regardless of how they appeared in the original dump.
 
 This is useful when the same table was defined in different orders across environments.
 

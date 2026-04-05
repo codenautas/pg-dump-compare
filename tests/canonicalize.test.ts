@@ -324,16 +324,28 @@ describe('canonicalize — -oti (order table internally)', () => {
     assert.deepStrictEqual(names, sorted, `constraints not sorted: ${names.join(', ')}`);
   });
 
-  it('adds trailing comma on last element', () => {
+  it('does not add a trailing comma on the last element', () => {
     const result = canonical(TABLE_SQL, { orderTableInternally: true });
-    // The last item before ');' should end with ','
     const lines = result.split('\n');
     const closeIdx = lines.findIndex(l => /^\s*\);/.test(l));
     assert.ok(closeIdx > 0, 'closing ); not found');
     let lastItem = closeIdx - 1;
     while (lastItem > 0 && lines[lastItem].trim() === '') lastItem--;
-    assert.ok(lines[lastItem].trimEnd().endsWith(','),
-      `last item before ); does not end with comma: ${JSON.stringify(lines[lastItem])}`);
+    assert.ok(!lines[lastItem].trimEnd().endsWith(','),
+      `last item before ); should not end with comma: ${JSON.stringify(lines[lastItem])}`);
+  });
+
+  it('adds a comma after every non-last element', () => {
+    const result = canonical(TABLE_SQL, { orderTableInternally: true });
+    const lines = result.split('\n');
+    const closeIdx = lines.findIndex(l => /^\s*\);/.test(l));
+    const createIdx = lines.findIndex(l => /^CREATE\s+TABLE\b/i.test(l));
+    // Collect the non-blank lines inside the table body except the last one
+    const bodyLines = lines.slice(createIdx + 1, closeIdx).filter(l => l.trim() !== '');
+    const nonLast = bodyLines.slice(0, -1);
+    for (const l of nonLast) {
+      assert.ok(l.trimEnd().endsWith(','), `non-last item missing comma: ${JSON.stringify(l)}`);
+    }
   });
 
   it('is idempotent with -oti', () => {

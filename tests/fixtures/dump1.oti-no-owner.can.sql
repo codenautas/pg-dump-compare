@@ -250,7 +250,7 @@ CREATE TABLE ejemplo.annios (
     annio integer NOT NULL,
     anterior integer,
     horario_habitual_desde time without time zone,
-    horario_habitual_hasta time without time zone,
+    horario_habitual_hasta time without time zone
 );
 
 
@@ -261,13 +261,13 @@ CREATE TABLE ejemplo.grupos (
     CONSTRAINT "clase<>''" CHECK ((clase <> ''::text)),
     CONSTRAINT "descripcion<>''" CHECK ((descripcion <> ''::text)),
     CONSTRAINT "grupo<>''" CHECK ((grupo <> ''::text)),
-    CONSTRAINT "palabra corta y solo mayusculas en grupo" CHECK ((grupo ~ similar_to_escape('[A-Z][A-Z0-9]{0,9}|[1-9]\d{0,10}'::text))),
+    CONSTRAINT "palabra corta y solo mayusculas en grupo" CHECK ((grupo ~ similar_to_escape('[A-Z][A-Z0-9]{0,9}|[1-9]\d{0,10}'::text)))
 );
 
 
 CREATE TABLE ejemplo.horarios_cod (
     horario text NOT NULL,
-    CONSTRAINT "horario<>''" CHECK ((horario <> ''::text)),
+    CONSTRAINT "horario<>''" CHECK ((horario <> ''::text))
 );
 
 
@@ -275,7 +275,7 @@ CREATE TABLE ejemplo.niveles_educativos (
     nivel_educativo text NOT NULL,
     nombre text,
     CONSTRAINT "nivel_educativo<>''" CHECK ((nivel_educativo <> ''::text)),
-    CONSTRAINT "nombre<>''" CHECK ((nombre <> ''::text)),
+    CONSTRAINT "nombre<>''" CHECK ((nombre <> ''::text))
 );
 
 
@@ -295,7 +295,7 @@ CREATE TABLE his.bitacora (
     CONSTRAINT "navigator<>''" CHECK ((navigator <> ''::text)),
     CONSTRAINT "parameters<>''" CHECK ((parameters <> ''::text)),
     CONSTRAINT "procedure_name<>''" CHECK ((procedure_name <> ''::text)),
-    CONSTRAINT "username<>''" CHECK ((username <> ''::text)),
+    CONSTRAINT "username<>''" CHECK ((username <> ''::text))
 );
 
 
@@ -310,7 +310,7 @@ CREATE TABLE his.changes (
     cha_schema text,
     cha_table text,
     cha_when timestamp without time zone,
-    cha_who text,
+    cha_who text
 );
 
 

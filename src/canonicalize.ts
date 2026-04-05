@@ -286,13 +286,19 @@ function reorderTableInternally(sqlLines: string[]): string[] {
 
   const sorted = [...columns, ...constraints];
 
-  // Rebuild with trailing comma on every item (including the last)
+  // Rebuild: comma after every item except the last (commas as separators)
   const newBody: string[] = [];
-  for (const item of sorted) {
-    const itemLines = [...item];
-    let last = itemLines.length - 1;
-    while (last > 0 && itemLines[last].trim() === '') last--;
-    itemLines[last] = itemLines[last] + ',';
+  for (let si = 0; si < sorted.length; si++) {
+    const itemLines = [...sorted[si]];
+    const isLast = si === sorted.length - 1;
+    let lastNonBlank = itemLines.length - 1;
+    while (lastNonBlank > 0 && itemLines[lastNonBlank].trim() === '') lastNonBlank--;
+    const line = itemLines[lastNonBlank];
+    if (!isLast && !line.trimEnd().endsWith(',')) {
+      itemLines[lastNonBlank] = line + ',';
+    } else if (isLast && line.trimEnd().endsWith(',')) {
+      itemLines[lastNonBlank] = line.trimEnd().slice(0, -1);
+    }
     for (const l of itemLines) newBody.push(l);
   }
 

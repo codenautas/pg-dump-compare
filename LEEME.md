@@ -70,7 +70,7 @@ Con este parámetro, el interior de cada `CREATE TABLE` se reordena:
 
 1. Las **columnas** se ordenan alfabéticamente por nombre.
 2. Los **constraints** (`CONSTRAINT … CHECK`, `CONSTRAINT … UNIQUE`, etc.) se agrupan al final, también ordenados alfabéticamente por nombre.
-3. Se agrega una trailing comma después del último elemento, lo que hace más limpos los diffs futuros.
+3. Las comas se tratan como separadores: todos los elementos excepto el último las tienen, y el último no — independientemente de cómo aparecían en el dump original.
 
 Es útil cuando la misma tabla fue definida en distinto orden en distintos entornos.
 
