@@ -3,7 +3,7 @@
 ## Objetivo
 
 Tener una herramienta que encuentre la diferencia entre dos bases de datos (o entre dos conjuntos de esquemas) 
-usando como input el el `pg_dump -f plain`.
+usando como input el `pg_dump --format=plain`.
 
 ¿Por qué no simplemente comparar ambos dumps con un `diff` de texto? 
 Porque Postgres no garantiza el orden en que se aparecen las definiciones de los objetos de la base.
@@ -11,7 +11,7 @@ Porque Postgres no garantiza el orden en que se aparecen las definiciones de los
 ## Uso
 
 ```bash
-$ pg-dump-compare SOURCE TARGET [-o OUTPUT_PATH] [-no-owner] [-can-owner]
+$ pg-dump-compare SOURCE TARGET [-o OUTPUT_PATH] [-no-owner] [-can-owner] [-oti]
 ```
 
 parámetro|valor predeterminado
@@ -24,31 +24,109 @@ _pg-dump-compare_ generará una serie de archivos de resultado en la carpeta _OU
 
 ### Versiones canónicas de SOURCE y TARGET
 
-Para que el usuario pueda utilizar su herramienta de diff preferida _pg-dump-compare_ generará una versión canónica de _SOURCE_ y de _TARGET_ (con la extensión .can.sql). 
+Para que el usuario pueda utilizar su herramienta de diff preferida, _pg-dump-compare_ generará una versión canónica de _SOURCE_ y de _TARGET_ (con la extensión `.can.sql`).
 
 La versión canónica también se puede obtener así:
 
 ```bash
-$ pg-dump-compare --canonical DUMP_FILE [-o CANONICAL_FILE]
+$ pg-dump-compare --canonical DUMP_FILE [-o CANONICAL_FILE] [-no-owner] [-can-owner] [-oti]
 ```
 
 parámetro|valor predeterminado
 ---------|-----------------------
--o       |_DUMP__FILE_.con.sql
+-o       |_DUMP_FILE_.can.sql
 
 En la versión canónica:
-1. Se quitarán los OID, los TOC entry y los timestamp de Started y Finalized
-2. Los owner se quitan con _-no-owner_ o se simlifican con _-can-owner_ (en este último caso solo irá el sufijo después de la raya `_`)
-3. Se respetarán las siguientes partes sin reordenamiento:
-    1. definiciones iniciales
-    2. creación de esquemas y extensiones
-    3. definiciones finales (sets para restaurar opciones)
-4. Se quitan los insert o copy from
-5. Se ordenan todos las declaraciones de objetos de function, procedures, types, tables, etc...
-6. Se ordenan por tipo de definición en un orden específico:
-    SCHEMA, EXTENSION, TYPE, FUNCTION, PROCEDURE, SEQUENCE, TABLE, VIEW, CONSTRAINTS (PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK, EXCLUDE, others), INDEX, TRIGGER, POLICY, ROW LEVEL SECURITY, GRANTS
-El criterio de ordenamiento es alfabético del nombre del objeto (cualificado por el esquema). 
+1. Se quitarán los OID, los TOC entry y los timestamp de Started y Finalized. Funciona tanto con dumps que incluyen TOC como con los que no.
+2. Se normalizan los saltos de línea (CRLF → LF).
+3. Los owner se quitan con _-no-owner_ o se simplifican con _-can-owner_ (ver más abajo). Aplica a `ALTER … OWNER TO`, `GRANT … TO` y `CREATE POLICY … TO`.
+4. Se respetarán las siguientes partes sin reordenamiento:
+    1. Definiciones iniciales (`SET` de conexión)
+    2. `SET default_tablespace` / `SET default_table_access_method` (se mueven aquí si aparecen en el medio del dump)
+    3. Creación de esquemas y extensiones (con sus `COMMENT ON EXTENSION`)
+5. Se quitan los datos: bloques `COPY … FROM stdin` (con o sin comentario de cabecera) y llamadas a `SELECT pg_catalog.setval(…)`. Solo se compara el esquema.
+6. Se ordenan todas las declaraciones de objetos por tipo y, dentro de cada tipo, alfabéticamente por nombre calificado (esquema.objeto), en este orden:
+
+   `SCHEMA` → `EXTENSION` → `TYPE` → `FUNCTION` → `PROCEDURE` → `SEQUENCE` → `TABLE` → `VIEW` → `CONSTRAINT` → `INDEX` → `TRIGGER` → `POLICY` → `ROW LEVEL SECURITY` → `GRANTS`
+
+7. Dentro del grupo `CONSTRAINT` se ordena por subtipo: `PRIMARY KEY` → `FOREIGN KEY` → `UNIQUE` → `CHECK` → `EXCLUDE` → otros.
+8. Con _-oti_ se ordena el interior de cada `CREATE TABLE` (ver más abajo).
+
+## Opciones
+
+### Opciones de owner
+
+opción|efecto
+------|------
+_(ninguna)_|Se conservan los nombres de owner y roles tal como están
+`-no-owner`|Se eliminan todas las líneas `ALTER … OWNER TO`, todos los `GRANT` y la cláusula `TO rol` de `CREATE POLICY`
+`-can-owner`|Se acorta cada nombre de owner/rol al sufijo después del último `_`, incluyendo el guion bajo (`ejemplo_muleto_owner` → `_owner`, `ejemplo_muleto_admin` → `_admin`)
+
+`-can-owner` es útil cuando se comparan dumps de entornos que usan el mismo esquema pero distintos prefijos de roles (por ejemplo `prod_owner` vs `staging_owner`).
+
+### `-oti` — Orden interno de tablas (Order Table Internally)
+
+Con este parámetro, el interior de cada `CREATE TABLE` se reordena:
+
+1. Las **columnas** se ordenan alfabéticamente por nombre.
+2. Los **constraints** (`CONSTRAINT … CHECK`, `CONSTRAINT … UNIQUE`, etc.) se agrupan al final, también ordenados alfabéticamente por nombre.
+3. Se agrega una trailing comma después del último elemento, lo que hace más limpos los diffs futuros.
+
+Es útil cuando la misma tabla fue definida en distinto orden en distintos entornos.
 
 ### Diferencias
 
-A partir de las versiones canónicas se genera un archivo `only.diff` estándar a partir de dos versiones reducidas de los canónicos donde no están las definiciones idénticas. 
+A partir de las versiones canónicas se genera un archivo `only.diff` usando `git diff --no-index` con los siguientes flags:
+
+- `--ignore-blank-lines` — se ignoran las diferencias que solo son líneas en blanco.
+- `-w` — se ignoran todas las diferencias de espacios en blanco (espacios, tabs, indentación).
+
+## Requisitos
+
+- Node.js 18+
+- Git en el PATH (se usa para generar el diff)
+- Un dump en formato plain de PostgreSQL (`pg_dump --format=plain` o `pg_dump -Fp`)
+
+## Ejemplo
+
+```bash
+# Generar dumps de dos bases (solo esquema)
+pg_dump -Fp -s mydb_prod    > prod.sql
+pg_dump -Fp -s mydb_staging > staging.sql
+
+# Comparar simplificando los nombres de roles
+pg-dump-compare prod.sql staging.sql -o resultados -can-owner
+
+# Abrir el diff con la herramienta preferida
+code resultados/only.diff
+```
+
+Los archivos canónicos (`resultados/prod.can.sql`, `resultados/staging.can.sql`) también se pueden comparar con cualquier herramienta de diff externa.
+
+```bash
+# Canonicalizar un solo dump con orden interno de tablas y sin owners
+pg-dump-compare --canonical prod.sql -o prod.can.sql -oti -no-owner
+```
+
+## Desarrollo
+
+```bash
+npm install
+npm run build   # compila TypeScript → dist/
+npm test        # build + tests con Mocha
+```
+
+Los tests incluyen tests unitarios del parser y del canonicalizador, tests del comportamiento del diff ante espacios en blanco, y **tests de integración con golden files** que comparan la salida completa contra fixtures guardados en `tests/fixtures/`. Si el comportamiento cambia intencionalmente, regenerar los golden files:
+
+```bash
+node dist/cli.js --canonical tests/fixtures/dump1.sql \
+    -o tests/fixtures/dump1.oti-no-owner.can.sql -oti -no-owner
+
+node dist/cli.js --canonical tests/fixtures/dump3.sql \
+    -o tests/fixtures/dump3.can.sql
+
+node dist/cli.js tests/fixtures/dump1.sql tests/fixtures/dump2.sql \
+    -o tests/fixtures -can-owner
+```
+
+Luego hacer commit de los fixtures actualizados — el diff de git queda como registro de exactamente qué cambió en la salida.
