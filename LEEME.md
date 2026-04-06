@@ -1,5 +1,8 @@
 # pg-dump-compare
 
+idioma: ![castellano](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-es.png)
+también disponible en: [![inglés](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-en.png)](README.md)
+
 ## Objetivo
 
 Tener una herramienta que encuentre la diferencia entre dos bases de datos (o entre dos conjuntos de esquemas) 
@@ -7,6 +10,18 @@ usando como input el `pg_dump --format=plain`.
 
 ¿Por qué no simplemente comparar ambos dumps con un `diff` de texto? 
 Porque Postgres no garantiza el orden en que se aparecen las definiciones de los objetos de la base.
+
+## Instalación
+
+```bash
+npm install -g pg-dump-compare
+```
+
+O sin instalar con `npx`:
+
+```bash
+npx pg-dump-compare source.sql target.sql
+```
 
 ## Uso
 

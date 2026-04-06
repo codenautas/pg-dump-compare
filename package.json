@@ -1,6 +1,6 @@
 {
   "name": "pg-dump-compare",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Compare two PostgreSQL database dumps canonically",
   "author": "Emilio Platzer",
   "license": "MIT",
@@ -25,10 +25,10 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.0",
-    "@types/node": "^20.0.0",
-    "mocha": "^10.0.0",
-    "ts-node": "^10.0.0",
-    "typescript": "^5.0.0"
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.5.2",
+    "mocha": "^11.3.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2"
   }
 }

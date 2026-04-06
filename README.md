@@ -1,5 +1,8 @@
 # pg-dump-compare
 
+language: ![English](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-en.png)
+also available in: [![Spanish](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-es.png)](LEEME.md)
+
 Compare two PostgreSQL databases (or schema sets) using plain `pg_dump` files as input.
 
 ## Why not just `diff` the dumps directly?
