@@ -102,6 +102,9 @@ function getQualifiedName(block: Block): string {
       /^GRANT\b.+\bON\s+(?:TABLE|SCHEMA|SEQUENCE|FUNCTION|PROCEDURE|ROUTINE|ALL\s+\w+\s+IN\s+SCHEMA)\s+((?:"[^"]+"|[\w$]+)(?:\.(?:"[^"]+"|[\w$]+))?)/i
     );
     if (m) return unquote(m[1]);
+    // GRANT ... ON TABLE name (without explicit TABLE keyword, column-level grants)
+    m = t.match(/^GRANT\b.+\bON\s+((?:"[^"]+"|[\w$]+)(?:\.(?:"[^"]+"|[\w$]+))?)/i);
+    if (m) return unquote(m[1]);
   }
 
   // Fallback: TOC schema + name
@@ -111,6 +114,35 @@ function getQualifiedName(block: Block): string {
 
 function unquote(s: string): string {
   return s.replace(/"/g, '');
+}
+
+// ─── sort helpers ────────────────────────────────────────────────────────────
+
+// Compare by primary key; if equal, fall back to full SQL content so the
+// sort is always deterministic (handles overloaded functions, etc.)
+function cmpWithFallback(ka: string, kb: string, blockA: Block, blockB: Block): number {
+  const primary = ka.localeCompare(kb);
+  if (primary !== 0) return primary;
+  return blockA.sqlLines.join('\n').localeCompare(blockB.sqlLines.join('\n'));
+}
+
+// ─── grant sort key ──────────────────────────────────────────────────────────
+
+// For GRANTs: "table \0 permissions \0 role" so that grants on the same table
+// are further sorted by what is granted, and finally by recipient role.
+function getGrantSortKey(sqlLines: string[]): string {
+  for (const line of sqlLines) {
+    const t = line.trimStart();
+    // GRANT <perms> ON [TABLE] <name> TO <role>
+    const m = t.match(/^GRANT\b(.*?)\bON\b(?:\s+\w+)?\s+((?:"[^"]+"|[\w$]+)(?:\.(?:"[^"]+"|[\w$]+))?)\s+TO\s+([\w$]+)/i);
+    if (m) {
+      const perms = m[1].trim();
+      const table = unquote(m[2]);
+      const role  = m[3];
+      return `${table}\0${perms}\0${role}`;
+    }
+  }
+  return sqlLines.join(' ');
 }
 
 // ─── constraint subtype ──────────────────────────────────────────────────────
@@ -414,10 +446,16 @@ export function canonicalize(dump: ParsedDump, opts: CanonicalOptions = {}): str
         const aOrd = ai === -1 ? CONSTRAINT_SUBTYPE_ORDER.length : ai;
         const bOrd = bi === -1 ? CONSTRAINT_SUBTYPE_ORDER.length : bi;
         if (aOrd !== bOrd) return aOrd - bOrd;
-        return a.qualifiedName.localeCompare(b.qualifiedName);
+        return cmpWithFallback(a.qualifiedName, b.qualifiedName, a.block, b.block);
+      });
+    } else if (cat === 'GRANT') {
+      items.sort((a, b) => {
+        const ka = getGrantSortKey(a.block.sqlLines);
+        const kb = getGrantSortKey(b.block.sqlLines);
+        return cmpWithFallback(ka, kb, a.block, b.block);
       });
     } else {
-      items.sort((a, b) => a.qualifiedName.localeCompare(b.qualifiedName));
+      items.sort((a, b) => cmpWithFallback(a.qualifiedName, b.qualifiedName, a.block, b.block));
     }
   }
 

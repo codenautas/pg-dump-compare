@@ -1,5 +1,5 @@
 diff --git "a/tests\\fixtures\\dump1.can.sql" "b/tests\\fixtures\\dump2.can.sql"
-index aa572c4..729096d 100644
+index f526d62..46dedf9 100644
 --- "a/tests\\fixtures\\dump1.can.sql"
 +++ "b/tests\\fixtures\\dump2.can.sql"
 @@ -23,7 +23,7 @@ SET default_table_access_method = heap;

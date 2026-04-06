@@ -123,6 +123,21 @@ describe('canonicalize — section order', () => {
     assert.ok(ii < ti, `INDEX (${ii}) should precede TRIGGER (${ti})`);
   });
 
+  it('sorts GRANTs by table, then permissions, then role', () => {
+    const dump = [
+      '--', '-- Name: TABLE fichadas_recibidas; Type: ACL; Schema: siper; Owner: siper_muleto_owner', '--', '',
+      'GRANT SELECT(fichador),INSERT(fichador),UPDATE(fichador) ON TABLE siper.fichadas_recibidas TO siper_modulo_fichador;',
+      '--', '-- Name: TABLE fichadas_recibidas; Type: ACL; Schema: siper; Owner: siper_muleto_owner', '--', '',
+      'GRANT SELECT(id_fichada) ON TABLE siper.fichadas_recibidas TO siper_modulo_fichador;',
+    ].join('\n');
+    const result = canonicalize(parseDump(dump));
+    const lines  = result.split('\n').filter(l => /^GRANT\b/i.test(l));
+    assert.strictEqual(lines.length, 2, 'expected 2 GRANT lines');
+    // SELECT(fichador...) < SELECT(id_fichada) because 'f' < 'i'
+    assert.ok(lines[0].includes('SELECT(fichador)'),   `wrong order: ${lines.join(' | ')}`);
+    assert.ok(lines[1].includes('SELECT(id_fichada)'), `wrong order: ${lines.join(' | ')}`);
+  });
+
   it('places GRANT last (after TRIGGER)', () => {
     const ti = result.search(/^CREATE TRIGGER\b/m);
     const gi = result.search(/^GRANT\b/m);

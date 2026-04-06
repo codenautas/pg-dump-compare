@@ -471,10 +471,10 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.annios TO ejemplo_in_admin;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.fechas TO ejemplo_in_admin;
 
 
-GRANT SELECT(texto),INSERT(texto),UPDATE(texto) ON TABLE ejemplo.fichadas_recibidas TO ejemplo_modulo_fichador;
-
-
 GRANT SELECT(dispositivo),INSERT(dispositivo),UPDATE(dispositivo) ON TABLE ejemplo.fichadas_recibidas TO ejemplo_modulo_fichador;
+
+
+GRANT SELECT(texto),INSERT(texto),UPDATE(texto) ON TABLE ejemplo.fichadas_recibidas TO ejemplo_modulo_fichador;
 
 
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ejemplo.trayectoria_laboral TO ejemplo_in_admin;
