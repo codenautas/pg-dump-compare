@@ -2,14 +2,27 @@
   "name": "pg-dump-compare",
   "version": "0.1.0",
   "description": "Compare two PostgreSQL database dumps canonically",
+  "author": "Emilio Platzer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codenautas/pg-dump-compare"
+  },
   "main": "dist/cli.js",
   "bin": {
     "pg-dump-compare": "dist/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "tsc",
     "test": "npm run build && mocha",
-    "prepublish": "npm run build"
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.0",
