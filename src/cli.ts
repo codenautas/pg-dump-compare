@@ -2,10 +2,11 @@
 import * as fs   from 'fs';
 import * as path from 'path';
 
-import { parseDump }      from './parser';
-import { canonicalize }   from './canonicalize';
-import { generateDiff }   from './diff';
-import { CanonicalOptions } from './types';
+import { parseDump }              from './parser';
+import { canonicalize }           from './canonicalize';
+import { generateDiff }           from './diff';
+import { compare, generateMigration } from './compare';
+import { CanonicalOptions }       from './types';
 
 function parseOwnerOpts(args: string[]): CanonicalOptions {
   const inRolesIdx = args.indexOf('-in-roles');
@@ -27,13 +28,16 @@ function main(): void {
   if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
     console.log([
       'Usage:',
-      '  pg-dump-compare SOURCE TARGET [-o OUTPUT_PATH] [-no-owner] [-can-owner]',
-      '  pg-dump-compare --canonical DUMP_FILE [-o CANONICAL_FILE] [-no-owner] [-can-owner]',
+      '  pg-dump-compare SOURCE TARGET [-o OUTPUT_PATH] [-no-roles] [-can-roles] [-in-roles S/T] [-oti]',
+      '  pg-dump-compare --canonical DUMP_FILE [-o CANONICAL_FILE] [-no-roles] [-can-roles] [-in-roles S/T] [-oti]',
+      '  pg-dump-compare --migrate SOURCE TARGET [-o OUTPUT_PATH] [-no-roles] [-can-roles] [-in-roles S/T]',
       '',
       'Options:',
-      '  -o PATH        Output path (default: pg-dump-compare-results / <dump>.can.sql)',
-      '  -no-owner      Remove all OWNER TO clauses',
-      '  -can-owner     Simplify owner names to the suffix after the last underscore',
+      '  -o PATH          Output path (default: pg-dump-compare-results / <dump>.can.sql)',
+      '  -no-roles        Remove all OWNER TO and GRANT statements',
+      '  -can-roles       Shorten role names to suffix after last underscore',
+      '  -in-roles S/T    Replace internal part of role names (e.g. _prod_/_staging_)',
+      '  -oti             Order table columns and constraints alphabetically',
     ].join('\n'));
     process.exit(0);
   }
@@ -56,6 +60,36 @@ function main(): void {
     const canonical = canonicalize(parseDump(content), opts);
     fs.writeFileSync(outFile, canonical);
     console.log(`Written: ${outFile}`);
+    return;
+  }
+
+  // ── migrate mode ───────────────────────────────────────────────────────────
+  if (args.includes('--migrate')) {
+    const cmpOIdx    = args.indexOf('-o');
+    const oValue     = cmpOIdx >= 0 ? args[cmpOIdx + 1] : null;
+    const positional = args.filter(a => !a.startsWith('-') && a !== '--migrate' && a !== oValue);
+    if (positional.length < 2) {
+      console.error('Error: --migrate requires SOURCE and TARGET');
+      process.exit(1);
+    }
+
+    const [source, target] = positional;
+    const outputPath       = cmpOIdx >= 0 ? args[cmpOIdx + 1] : 'pg-dump-compare-results';
+
+    fs.mkdirSync(outputPath, { recursive: true });
+
+    const sourceDump = parseDump(fs.readFileSync(source, 'utf-8'));
+    const targetDump = parseDump(fs.readFileSync(target, 'utf-8'));
+
+    const findings  = compare(sourceDump, targetDump, opts);
+    const migration = generateMigration(findings);
+
+    const migrateFile = path.join(outputPath, 'migrate.sql');
+    fs.writeFileSync(migrateFile, migration);
+    console.log(`Written: ${migrateFile}`);
+    console.log(`  ${findings.filter(f => f.kind === 'missing').length} missing, ` +
+                `${findings.filter(f => f.kind === 'changed').length} changed, ` +
+                `${findings.filter(f => f.kind === 'extra').length} extra`);
     return;
   }
 

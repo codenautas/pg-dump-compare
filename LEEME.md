@@ -41,6 +41,26 @@ _pg-dump-compare_ generará una serie de archivos de resultado en la carpeta _OU
 
 Para que el usuario pueda utilizar su herramienta de diff preferida, _pg-dump-compare_ generará una versión canónica de _SOURCE_ y de _TARGET_ (con la extensión `.can.sql`).
 
+### Script de migración
+
+También se puede generar un script de migración SQL:
+
+```bash
+$ pg-dump-compare --migrate SOURCE TARGET [-o OUTPUT_PATH] [-no-roles] [-can-roles] [-in-roles SOURCE/TARGET]
+```
+
+Compara SOURCE (el estado actual) con TARGET (el estado deseado) y escribe `migrate.sql` en `OUTPUT_PATH`. El script contiene los comandos SQL necesarios para llevar SOURCE al estado de TARGET:
+
+- Objetos presentes en TARGET pero no en SOURCE → sentencias `CREATE` / `GRANT`
+- Objetos presentes en SOURCE pero no en TARGET → sentencias `DROP` / `REVOKE`
+- Objetos presentes en ambos pero con diferencias → `ALTER`, `CREATE OR REPLACE`, etc.
+
+Para tablas, los cambios de columnas se desglosan en `ADD COLUMN`, `DROP COLUMN`, `ALTER COLUMN … TYPE`, `SET NOT NULL`, `DROP NOT NULL`, `SET DEFAULT` y `DROP DEFAULT`.
+
+> **Revisar el script generado antes de ejecutarlo.** Nunca se agrega `CASCADE` automáticamente.
+
+### Versión canónica de un solo dump
+
 La versión canónica también se puede obtener así:
 
 ```bash
@@ -142,6 +162,12 @@ Los archivos canónicos (`resultados/prod.can.sql`, `resultados/staging.can.sql`
 ```bash
 # Canonicalizar un solo dump con orden interno de tablas y sin owners
 pg-dump-compare --canonical prod.sql -o prod.can.sql -oti -no-roles
+```
+
+```bash
+# Generar un script de migración de prod a staging
+pg-dump-compare --migrate prod.sql staging.sql -o resultados -in-roles _prod_/_staging_
+# Revisar y ejecutar: psql mydb < resultados/migrate.sql
 ```
 
 ## Desarrollo

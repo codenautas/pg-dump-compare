@@ -47,6 +47,28 @@ Generates canonical versions of both dumps and a unified diff in `OUTPUT_PATH`.
 | `<target>.can.sql` | Canonical version of TARGET |
 | `only.diff` | Unified diff between the two canonicals |
 
+### Generate a migration script
+
+```bash
+pg-dump-compare --migrate SOURCE TARGET [-o OUTPUT_PATH] [-no-roles] [-can-roles] [-in-roles SOURCE/TARGET]
+```
+
+Compares SOURCE (the current state) against TARGET (the desired state) and writes `migrate.sql` to `OUTPUT_PATH`. The script contains the SQL statements needed to bring SOURCE up to TARGET:
+
+- Objects present in TARGET but not in SOURCE → `CREATE` / `GRANT` statements
+- Objects present in SOURCE but not in TARGET → `DROP` / `REVOKE` statements
+- Objects present in both but different → `ALTER`, `CREATE OR REPLACE`, etc.
+
+For tables, column-level changes are broken down into `ADD COLUMN`, `DROP COLUMN`, `ALTER COLUMN … TYPE`, `SET NOT NULL`, `DROP NOT NULL`, `SET DEFAULT`, and `DROP DEFAULT`.
+
+**Output files:**
+
+| File | Description |
+|---|---|
+| `migrate.sql` | Migration script to apply to SOURCE |
+
+> **Review the generated script carefully before running it.** No `CASCADE` is ever added automatically.
+
 ### Canonicalize a single dump
 
 ```bash
@@ -153,6 +175,12 @@ The canonical files (`results/prod.can.sql`, `results/staging.can.sql`) can also
 ```bash
 # Canonicalize a single dump with table-internal ordering, stripping owners
 pg-dump-compare --canonical prod.sql -o prod.can.sql -oti -no-roles
+```
+
+```bash
+# Generate a migration script from prod to staging
+pg-dump-compare --migrate prod.sql staging.sql -o results -in-roles _prod_/_staging_
+# Review and run: psql mydb < results/migrate.sql
 ```
 
 ## Development
