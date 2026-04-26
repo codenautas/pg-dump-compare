@@ -198,6 +198,41 @@ function diffTable(qualifiedName: string, srcLines: string[], tgtLines: string[]
   return out;
 }
 
+// ─── owner-table extraction ───────────────────────────────────────────────────
+
+/** Returns the schema-qualified table name that owns the given object, or null. */
+function ownerTable(category: ObjectCategory, sqlLines: string[]): string | null {
+  const sql = sqlLines.join(' ');
+  switch (category) {
+    case 'CONSTRAINT': {
+      const m = sql.match(/ALTER\s+TABLE\b(?:\s+ONLY)?\s+((?:"[^"]+"|[\w$]+)(?:\.(?:"[^"]+"|[\w$]+))?)/i);
+      return m ? m[1].replace(/"/g, '') : null;
+    }
+    case 'INDEX': {
+      const m = sql.match(/\bON\s+((?:"[^"]+"|[\w$]+)(?:\.(?:"[^"]+"|[\w$]+))?)/i);
+      return m ? m[1].replace(/"/g, '') : null;
+    }
+    case 'TRIGGER': {
+      const m = sql.match(/\bON\s+((?:"[^"]+"|[\w$]+)(?:\.(?:"[^"]+"|[\w$]+))?)/i);
+      return m ? m[1].replace(/"/g, '') : null;
+    }
+    case 'POLICY': {
+      const m = sql.match(/CREATE\s+POLICY\b.*?\bON\s+((?:"[^"]+"|[\w$]+)(?:\.(?:"[^"]+"|[\w$]+))?)/i);
+      return m ? m[1].replace(/"/g, '') : null;
+    }
+    case 'ROW_SECURITY': {
+      const m = sql.match(/ALTER\s+TABLE\b(?:\s+ONLY)?\s+((?:"[^"]+"|[\w$]+)(?:\.(?:"[^"]+"|[\w$]+))?)/i);
+      return m ? m[1].replace(/"/g, '') : null;
+    }
+    case 'GRANT': {
+      const m = sql.match(/\bON\s+(?:TABLE\s+)?((?:"[^"]+"|[\w$]+)(?:\.(?:"[^"]+"|[\w$]+))?)/i);
+      return m ? m[1].replace(/"/g, '') : null;
+    }
+    default:
+      return null;
+  }
+}
+
 // ─── migration SQL for each kind/category ────────────────────────────────────
 
 function migrationLines(finding: Finding): string[] {
@@ -252,9 +287,16 @@ function migrationLines(finding: Finding): string[] {
   switch (category) {
     case 'FUNCTION':
     case 'PROCEDURE':
-    case 'VIEW':
-      // CREATE OR REPLACE handles it
-      return [...targetSql, ''];
+    case 'VIEW': {
+      // Rewrite CREATE → CREATE OR REPLACE so re-running is safe
+      const replaced = targetSql.map(l =>
+        l.replace(
+          /^(CREATE)\b(\s+(?:FUNCTION|PROCEDURE|(?:MATERIALIZED\s+)?VIEW)\b)/i,
+          (_, c, rest) => `${c} OR REPLACE${rest}`
+        )
+      );
+      return [...replaced, ''];
+    }
 
     case 'TABLE':
       return [...diffTable(qualifiedName, sourceSql, targetSql), ''];
@@ -368,7 +410,11 @@ export function compare(source: ParsedDump, target: ParsedDump, opts: CompareOpt
   for (const [key, src] of srcIndex) {
     const tgt = tgtIndex.get(key);
     if (!tgt) continue;
-    if (src.sqlLines.join('\n') !== tgt.sqlLines.join('\n')) {
+    const normalize = (lines: string[]) =>
+      lines
+        .filter(l => !/^\s*ALTER\b.*\bOWNER\s+TO\b/i.test(l))
+        .join('\n').replace(/\s+/g, ' ').trim();
+    if (normalize(src.sqlLines) !== normalize(tgt.sqlLines)) {
       findings.push({
         kind:          'changed',
         category:      src.category,
@@ -389,10 +435,24 @@ const CATEGORY_SORT_ORDER = new Map<ObjectCategory, number>(
 );
 
 export function generateMigration(findings: Finding[]): string {
+  // Drop dependents of dropped tables (constraints, indexes, triggers, policies,
+  // row security, grants) — they are implicitly removed by DROP TABLE.
+  const droppedTables = new Set(
+    findings
+      .filter(f => f.kind === 'extra' && f.category === 'TABLE')
+      .map(f => f.qualifiedName)
+  );
+
+  const active = droppedTables.size === 0 ? findings : findings.filter(f => {
+    if (f.kind !== 'extra' || f.category === 'TABLE') return true;
+    const owner = ownerTable(f.category, f.sourceSql);
+    return owner === null || !droppedTables.has(owner);
+  });
+
   // Sort: by category order, then qualifiedName, then kind (missing < changed < extra)
   const kindOrder: Record<FindingKind, number> = { missing: 0, changed: 1, extra: 2 };
 
-  const sorted = [...findings].sort((a, b) => {
+  const sorted = [...active].sort((a, b) => {
     const ca = CATEGORY_SORT_ORDER.get(a.category) ?? 99;
     const cb = CATEGORY_SORT_ORDER.get(b.category) ?? 99;
     if (ca !== cb) return ca - cb;

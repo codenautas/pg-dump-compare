@@ -110,8 +110,10 @@ function main(): void {
   const sourceCanFile = path.join(outputPath, canSuffix(path.basename(source)));
   const targetCanFile = path.join(outputPath, canSuffix(path.basename(target)));
 
-  const sourceCanonical = canonicalize(parseDump(fs.readFileSync(source, 'utf-8')), opts);
-  const targetCanonical = canonicalize(parseDump(fs.readFileSync(target, 'utf-8')), opts);
+  const sourceDump      = parseDump(fs.readFileSync(source, 'utf-8'));
+  const targetDump      = parseDump(fs.readFileSync(target, 'utf-8'));
+  const sourceCanonical = canonicalize(sourceDump, opts);
+  const targetCanonical = canonicalize(targetDump, opts);
 
   fs.writeFileSync(sourceCanFile, sourceCanonical);
   fs.writeFileSync(targetCanFile, targetCanonical);
@@ -121,6 +123,15 @@ function main(): void {
   const diffFile = path.join(outputPath, 'only.diff');
   generateDiff(sourceCanFile, targetCanFile, diffFile);
   console.log(`Written: ${diffFile}`);
+
+  const findings    = compare(sourceDump, targetDump, opts);
+  const migration   = generateMigration(findings);
+  const migrateFile = path.join(outputPath, 'migrate.sql');
+  fs.writeFileSync(migrateFile, migration);
+  console.log(`Written: ${migrateFile}`);
+  console.log(`  ${findings.filter(f => f.kind === 'missing').length} missing, ` +
+              `${findings.filter(f => f.kind === 'changed').length} changed, ` +
+              `${findings.filter(f => f.kind === 'extra').length} extra`);
 }
 
 main();

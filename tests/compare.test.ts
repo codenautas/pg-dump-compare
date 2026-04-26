@@ -99,7 +99,7 @@ describe('compare — changed objects', () => {
     const tgt = dump([block('myfn', 'FUNCTION', 'public',
       "CREATE FUNCTION public.myfn() RETURNS void LANGUAGE sql AS $$SELECT 2$$;\nALTER FUNCTION public.myfn() OWNER TO owner;")]);
     const migration = generateMigration(compare(src, tgt));
-    assert.ok(migration.includes('CREATE FUNCTION public.myfn()'), migration);
+    assert.ok(migration.includes('CREATE OR REPLACE FUNCTION public.myfn()'), migration);
     assert.ok(migration.includes('SELECT 2'), migration);
   });
 
@@ -156,6 +156,64 @@ describe('compare — overloaded functions', () => {
     assert.strictEqual(findings.length, 2);
     assert.ok(findings.some(f => f.kind === 'missing'), 'expected missing');
     assert.ok(findings.some(f => f.kind === 'extra'),   'expected extra');
+  });
+});
+
+// ─── dropped table cascades ───────────────────────────────────────────────────
+
+describe('generateMigration — dropped table suppresses dependents', () => {
+  const tableSql = (name: string) =>
+    block(name, 'TABLE', 'public', `CREATE TABLE public.${name} (id integer);\nALTER TABLE public.${name} OWNER TO owner;`);
+  const constraintSql = block('foo_pkey', 'CONSTRAINT', 'public',
+    `ALTER TABLE ONLY public.foo ADD CONSTRAINT foo_pkey PRIMARY KEY (id);`);
+  const indexSql = block('foo_idx', 'INDEX', 'public',
+    `CREATE INDEX foo_idx ON public.foo USING btree (id);`);
+  const grantSql = block('TABLE foo', 'ACL', 'public',
+    `GRANT SELECT ON TABLE public.foo TO myrole;`);
+
+  it('omits constraints of a dropped table', () => {
+    const src = dump([tableSql('foo'), constraintSql]);
+    const tgt = dump([]);
+    const migration = generateMigration(compare(src, tgt));
+    assert.ok(!migration.includes('DROP CONSTRAINT'), migration);
+    assert.ok(migration.includes('DROP TABLE IF EXISTS public.foo'), migration);
+  });
+
+  it('omits indexes of a dropped table', () => {
+    const src = dump([tableSql('foo'), indexSql]);
+    const tgt = dump([]);
+    const migration = generateMigration(compare(src, tgt));
+    assert.ok(!migration.includes('DROP INDEX'), migration);
+    assert.ok(migration.includes('DROP TABLE IF EXISTS public.foo'), migration);
+  });
+
+  it('omits grants on a dropped table', () => {
+    const src = dump([tableSql('foo'), grantSql]);
+    const tgt = dump([]);
+    const migration = generateMigration(compare(src, tgt));
+    assert.ok(!migration.includes('REVOKE'), migration);
+    assert.ok(migration.includes('DROP TABLE IF EXISTS public.foo'), migration);
+  });
+
+  it('keeps dependents of tables that are NOT dropped', () => {
+    const grantOnBar = block('TABLE bar', 'ACL', 'public', 'GRANT SELECT ON TABLE public.bar TO myrole;');
+    const src = dump([tableSql('foo'), tableSql('bar'), grantOnBar]);
+    const tgt = dump([tableSql('bar')]);
+    const migration = generateMigration(compare(src, tgt));
+    assert.ok(migration.includes('DROP TABLE IF EXISTS public.foo'), migration);
+    assert.ok(migration.includes('REVOKE SELECT ON TABLE public.bar FROM myrole'), 'grant on bar should still be revoked');
+  });
+});
+
+// ─── whitespace normalization ─────────────────────────────────────────────────
+
+describe('compare — whitespace normalization', () => {
+  it('treats objects with only whitespace differences as identical', () => {
+    const src = dump([block('myfn', 'FUNCTION', 'public',
+      'CREATE FUNCTION public.myfn() RETURNS void LANGUAGE sql AS $$SELECT 1$$;\nALTER FUNCTION public.myfn() OWNER TO owner;')]);
+    const tgt = dump([block('myfn', 'FUNCTION', 'public',
+      'CREATE FUNCTION public.myfn()  RETURNS void  LANGUAGE sql AS $$SELECT 1$$;\nALTER FUNCTION public.myfn()  OWNER TO owner;')]);
+    assert.strictEqual(compare(src, tgt).length, 0);
   });
 });
 
